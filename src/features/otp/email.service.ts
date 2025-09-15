@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { InternalServerError } from '../../utils/errors';
+import { env } from '../../config/env';
 
 /**
  * Simple email service for sending OTP codes
@@ -10,12 +11,12 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
       secure: false,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
       },
     });
   }
@@ -28,7 +29,7 @@ export class EmailService {
   async sendOtpEmail(email: string, code: string): Promise<void> {
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: env.SMTP_FROM || env.SMTP_USER,
         to: email,
         subject: 'Your Login Code',
         text: `Your OTP code is: ${code}. This code is valid for 10 minutes.`,

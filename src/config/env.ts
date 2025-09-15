@@ -24,6 +24,12 @@ const envSchema = z.object({
   TWITTER_CLIENT_SECRET: z.string().min(1, 'Twitter Client Secret is required'),
   TWITTER_REDIRECT_URI: z.string().url('Twitter Redirect URI must be a valid URL'),
   FRONTEND_DEFAULT_URL: z.string().url('Frontend Default URL must be a valid URL').default('http://localhost:3000'),
+
+  SMTP_HOST: z.string().min(1, 'SMTP Host is required').default('smtp.mailgun.org'),
+  SMTP_PORT: z.string().default('587').transform(Number),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
