@@ -30,7 +30,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.2",
+    "jose": "^6.1.0",
     "mysql2": "^3.14.3",
     "redis": "^5.8.1",
     "zod": "^4.0.17"
@@ -41,7 +41,6 @@
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
     "@types/redis": "^4.0.11",
     "@types/supertest": "^6.0.3",

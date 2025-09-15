@@ -4,6 +4,7 @@ import { RegisterInput, LoginInput } from './auth.validation';
 import { successResponse } from '../../utils/response.utils';
 import { HttpStatus } from '../../types/response.types';
 import { AuthenticationError, NotFoundError } from '../../utils/errors';
+import { getJwks } from '../../utils/jwt.utils';
 
 const authService = new AuthService();
 
@@ -43,6 +44,15 @@ export class AuthController {
       }
 
       successResponse(res, { user }, 'Profile retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async jwksEndpoint(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const jwks = await getJwks();
+      res.json(jwks);
     } catch (error) {
       next(error);
     }

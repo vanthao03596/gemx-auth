@@ -18,7 +18,7 @@ export const authenticateToken = async (
       return next(new AuthenticationError('Access token is required'));
     }
 
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token);
     
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -57,7 +57,7 @@ export const optionalAuth = async (
       return next();
     }
 
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token);
     
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },

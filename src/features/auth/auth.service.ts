@@ -37,7 +37,7 @@ export class AuthService {
       },
     });
 
-    const token = generateToken({
+    const token = await generateToken({
       userId: user.id,
       email: user.email,
     });
@@ -54,7 +54,7 @@ export class AuthService {
       throw new AuthenticationError('Invalid credentials');
     }
 
-    const isPasswordValid = await comparePassword(data.password, user.password);
+    const isPasswordValid = await comparePassword(data.password, user.password!);
 
     if (!isPasswordValid) {
       throw new AuthenticationError('Invalid credentials');
@@ -62,7 +62,7 @@ export class AuthService {
 
     const { password, ...userWithoutPassword } = user;
 
-    const token = generateToken({
+    const token = await generateToken({
       userId: user.id,
       email: user.email,
     });

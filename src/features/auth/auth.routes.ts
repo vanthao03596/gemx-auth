@@ -28,4 +28,9 @@ router.get(
   authController.getProfile
 );
 
+router.get(
+  '/.well-known/jwks.json',
+  authController.jwksEndpoint
+);
+
 export { router as authRoutes };
