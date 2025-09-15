@@ -20,6 +20,23 @@ model User {
   name      String   @map("name")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
+
+  otpCodes  OtpCode[]
+
   @@map("users")
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  email     String   @map("email")
+  code      String   @map("code")
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([email])
+  @@map("otp_codes")
 }

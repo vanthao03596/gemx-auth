@@ -2,8 +2,10 @@ import { User } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { generateToken } from '../../utils/jwt.utils';
-import { RegisterInput, LoginInput } from './auth.validation';
+import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput } from './auth.validation';
 import { ConflictError, AuthenticationError } from '../../utils/errors';
+import { generateOtp, createOtpExpiration, isOtpExpired } from '../../utils/otp.utils';
+import { EmailService } from '../otp/email.service';
 
 export interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -11,6 +13,12 @@ export interface AuthResponse {
 }
 
 export class AuthService {
+  private emailService: EmailService;
+
+  constructor() {
+    this.emailService = new EmailService();
+  }
+
   async register(data: RegisterInput): Promise<AuthResponse> {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
@@ -83,5 +91,111 @@ export class AuthService {
     });
 
     return user;
+  }
+
+  async sendOtp(data: SendOtpInput): Promise<void> {
+    const { email } = data;
+
+    // Generate OTP
+    const code = generateOtp();
+    const expiresAt = createOtpExpiration();
+
+    // Create or find user
+    let user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, name: true }
+    });
+
+    if (!user) {
+      // Auto-create user for OTP login
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: '', // Empty password for OTP-only users
+          name: email.split('@')[0] || email // Use email prefix as default name, fallback to email
+        },
+        select: { id: true, email: true, name: true }
+      });
+    }
+
+    // Store OTP (upsert to handle existing OTP codes)
+    await prisma.otpCode.upsert({
+      where: { email },
+      update: {
+        code,
+        expiresAt,
+        usedAt: null // Reset used status
+      },
+      create: {
+        userId: user.id,
+        email,
+        code,
+        expiresAt
+      }
+    });
+
+    // Send email
+    await this.emailService.sendOtpEmail(email, code);
+
+    // In development, log OTP for testing
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔐 OTP for ${email}: ${code}`);
+    }
+  }
+
+  async verifyOtp(data: VerifyOtpInput): Promise<AuthResponse> {
+    const { email, code } = data;
+
+    // Find OTP code
+    const otpRecord = await prisma.otpCode.findUnique({
+      where: { email },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        }
+      }
+    });
+
+    if (!otpRecord) {
+      throw new AuthenticationError('Invalid OTP code');
+    }
+
+    // Check if OTP is already used
+    if (otpRecord.usedAt) {
+      throw new AuthenticationError('OTP code has already been used');
+    }
+
+    // Check if OTP is expired
+    if (isOtpExpired(otpRecord.expiresAt)) {
+      throw new AuthenticationError('OTP code has expired');
+    }
+
+    // Check if code matches
+    if (otpRecord.code !== code) {
+      throw new AuthenticationError('Invalid OTP code');
+    }
+
+    // Mark OTP as used
+    await prisma.otpCode.update({
+      where: { email },
+      data: { usedAt: new Date() }
+    });
+
+    // Generate JWT token
+    const token = await generateToken({
+      userId: otpRecord.user.id,
+      email: otpRecord.user.email,
+    });
+
+    return {
+      user: otpRecord.user,
+      token
+    };
   }
 }
