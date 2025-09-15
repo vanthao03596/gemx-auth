@@ -1,12 +1,15 @@
 import { Router } from 'express';
 import { AuthController } from './auth.controller';
-import { validateBody } from '../../middleware/validation.middleware';
+import { SocialAuthController } from './social.controller';
+import { validateBody, validateQuery } from '../../middleware/validation.middleware';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { authRateLimit, createRateLimiter } from '../../middleware/rateLimiter.middleware';
 import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema } from './auth.validation';
+import { urlQuerySchema, callbackQuerySchema } from './social.validation';
 
 const router = Router();
 const authController = new AuthController();
+const socialAuthController = new SocialAuthController();
 
 // Rate limiter for OTP requests - 3 requests per 15 minutes
 const otpRateLimit = createRateLimiter({
@@ -53,6 +56,33 @@ router.post(
   authRateLimit,
   validateBody(verifyOtpSchema),
   authController.verifyOtp.bind(authController)
+);
+
+// Social authentication routes
+router.get(
+  '/google/url',
+  authRateLimit,
+  validateQuery(urlQuerySchema),
+  socialAuthController.getGoogleAuthUrl.bind(socialAuthController)
+);
+
+router.get(
+  '/google/callback',
+  validateQuery(callbackQuerySchema),
+  socialAuthController.googleCallback.bind(socialAuthController)
+);
+
+router.get(
+  '/twitter/url',
+  authRateLimit,
+  validateQuery(urlQuerySchema),
+  socialAuthController.getTwitterAuthUrl.bind(socialAuthController)
+);
+
+router.get(
+  '/twitter/callback',
+  validateQuery(callbackQuerySchema),
+  socialAuthController.twitterCallback.bind(socialAuthController)
 );
 
 export { router as authRoutes };

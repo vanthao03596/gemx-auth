@@ -15,6 +15,15 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW: z.string().default('15m'),
   RATE_LIMIT_MAX: z.string().default('5').transform(Number),
   CORS_ORIGINS: z.string().optional().transform(val => val ? val.split(',') : undefined),
+
+  // OAuth configuration
+  GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required'),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required'),
+  GOOGLE_REDIRECT_URI: z.string().url('Google Redirect URI must be a valid URL'),
+  TWITTER_CLIENT_ID: z.string().min(1, 'Twitter Client ID is required'),
+  TWITTER_CLIENT_SECRET: z.string().min(1, 'Twitter Client Secret is required'),
+  TWITTER_REDIRECT_URI: z.string().url('Twitter Redirect URI must be a valid URL'),
+  FRONTEND_DEFAULT_URL: z.string().url('Frontend Default URL must be a valid URL').default('http://localhost:3000'),
 });
 
 export type Env = z.infer<typeof envSchema>;
