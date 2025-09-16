@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput } from './auth.validation';
+import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInput } from './auth.validation';
 import { successResponse } from '../../utils/response.utils';
 import { HttpStatus } from '../../types/response.types';
 import { AuthenticationError, NotFoundError } from '../../utils/errors';
@@ -78,6 +78,25 @@ export class AuthController {
     try {
       const jwks = await getJwks();
       res.json(jwks);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async siweNonce(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await this.authService.generateSiweNonce();
+      successResponse(res, result, 'SIWE nonce generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async siweVerify(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = req.validatedBody as SiweVerifyInput;
+      const result = await this.authService.verifySiweSignature(data);
+      successResponse(res, result, 'SIWE authentication successful');
     } catch (error) {
       next(error);
     }

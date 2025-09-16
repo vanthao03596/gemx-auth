@@ -30,6 +30,11 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
+
+  // SIWE configuration
+  RPC_URL: z.string().url('RPC URL must be a valid URL'),
+  SIWE_DOMAINS: z.string().min(1, 'SIWE domains are required').transform(val => val.split(',')),
+  CHAIN_ID: z.string().default('1').transform(Number),
 });
 
 export type Env = z.infer<typeof envSchema>;

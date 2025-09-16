@@ -36,6 +36,7 @@
     "nodemailer": "^7.0.6",
     "redis": "^5.8.1",
     "twitter-api-v2": "^1.27.0",
+    "viem": "^2.37.6",
     "zod": "^4.0.17"
   },
   "devDependencies": {

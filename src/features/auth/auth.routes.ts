@@ -4,7 +4,7 @@ import { SocialAuthController } from './social.controller';
 import { validateBody, validateQuery } from '../../middleware/validation.middleware';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { authRateLimit, createRateLimiter } from '../../middleware/rateLimiter.middleware';
-import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema } from './auth.validation';
+import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema, siweVerifySchema } from './auth.validation';
 import { urlQuerySchema, callbackQuerySchema } from './social.validation';
 
 const router = Router();
@@ -83,6 +83,20 @@ router.get(
   '/twitter/callback',
   validateQuery(callbackQuerySchema),
   socialAuthController.twitterCallback.bind(socialAuthController)
+);
+
+// SIWE authentication routes
+router.get(
+  '/siwe/nonce',
+  authRateLimit,
+  authController.siweNonce.bind(authController)
+);
+
+router.post(
+  '/siwe/verify',
+  authRateLimit,
+  validateBody(siweVerifySchema),
+  authController.siweVerify.bind(authController)
 );
 
 export { router as authRoutes };

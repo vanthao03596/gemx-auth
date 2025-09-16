@@ -2,10 +2,14 @@ import { User } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { generateToken } from '../../utils/jwt.utils';
-import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput } from './auth.validation';
+import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInput } from './auth.validation';
 import { ConflictError, AuthenticationError } from '../../utils/errors';
 import { generateOtp, createOtpExpiration, isOtpExpired } from '../../utils/otp.utils';
 import { EmailService } from '../otp/email.service';
+import { generateSiweNonce, parseSiweMessage, verifySiweMessage } from 'viem/siwe';
+import { siweClient, isValidSiweDomain } from '../../config/siwe';
+import { setCache, getCache, deleteCache } from '../../utils/redis.utils';
+import { SiweNonceResponse } from './siwe.types';
 
 export interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -40,6 +44,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        walletAddress: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -85,6 +90,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        walletAddress: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -103,7 +109,7 @@ export class AuthService {
     // Create or find user
     let user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, name: true }
+      select: { id: true, email: true, name: true, walletAddress: true }
     });
 
     if (!user) {
@@ -114,7 +120,7 @@ export class AuthService {
           password: '', // Empty password for OTP-only users
           name: email.split('@')[0] || email // Use email prefix as default name, fallback to email
         },
-        select: { id: true, email: true, name: true }
+        select: { id: true, email: true, name: true, walletAddress: true }
       });
     }
 
@@ -155,6 +161,7 @@ export class AuthService {
             id: true,
             email: true,
             name: true,
+            walletAddress: true,
             createdAt: true,
             updatedAt: true,
           }
@@ -197,5 +204,95 @@ export class AuthService {
       user: otpRecord.user,
       token
     };
+  }
+
+  async generateSiweNonce(): Promise<SiweNonceResponse> {
+    const nonce = generateSiweNonce();
+
+    // Store nonce in Redis with 5min TTL for replay attack prevention
+    await setCache(`siwe:nonce:${nonce}`, 'unused', 300);
+
+    return { nonce };
+  }
+
+  async verifySiweSignature(data: SiweVerifyInput): Promise<AuthResponse> {
+    const { message, signature } = data;
+
+    // Parse SIWE message to extract nonce and address
+    let siweMessage;
+    try {
+      siweMessage = parseSiweMessage(message);
+    } catch (_error) {
+      throw new AuthenticationError('Invalid SIWE message format');
+    }
+
+    // Validate domain is in allowed list
+    if (!siweMessage.domain || !isValidSiweDomain(siweMessage.domain)) {
+      throw new AuthenticationError(`Invalid domain: ${siweMessage.domain}. Must be one of the configured domains.`);
+    }
+
+    // Validate nonce exists and hasn't been used
+    const storedNonce = await getCache<string>(`siwe:nonce:${siweMessage.nonce}`);
+    if (!storedNonce) {
+      throw new AuthenticationError('Invalid or expired nonce');
+    }
+
+    // Verify signature using viem
+    const isValid = await verifySiweMessage(siweClient, {
+      message,
+      signature: signature as `0x${string}`,
+      domain: siweMessage.domain, // Use the domain from the message itself
+    });
+
+    if (!isValid) {
+      throw new AuthenticationError('Invalid signature');
+    }
+
+    // Invalidate nonce after successful verification
+    await deleteCache(`siwe:nonce:${siweMessage.nonce}`);
+
+    // Find or create user by wallet address
+    if (!siweMessage.address) {
+      throw new AuthenticationError('Invalid SIWE message: missing address');
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { walletAddress: siweMessage.address.toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        walletAddress: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          walletAddress: siweMessage.address.toLowerCase(),
+          name: `User ${siweMessage.address.slice(0, 8)}`,
+          email: `${siweMessage.address.toLowerCase()}@wallet.local`,
+          password: '', // Empty password for wallet users
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          walletAddress: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    }
+
+    // Generate JWT using existing utility
+    const token = await generateToken({
+      userId: user.id,
+      email: user.email,
+    });
+
+    return { user, token };
   }
 }

@@ -30,7 +30,13 @@ export const verifyOtpSchema = z.object({
     .regex(/^\d{6}$/, 'OTP code must contain only numbers'),
 });
 
+export const siweVerifySchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  signature: z.string().regex(/^0x[a-fA-F0-9]{130}$/, 'Invalid signature format'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SendOtpInput = z.infer<typeof sendOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+export type SiweVerifyInput = z.infer<typeof siweVerifySchema>;

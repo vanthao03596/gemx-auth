@@ -121,6 +121,7 @@ export class SocialAuthService {
             id: true,
             email: true,
             name: true,
+            walletAddress: true,
             createdAt: true,
             updatedAt: true
           }
@@ -156,6 +157,7 @@ export class SocialAuthService {
           id: true,
           email: true,
           name: true,
+          walletAddress: true,
           createdAt: true,
           updatedAt: true,
           password: true // Need this for the transaction
@@ -179,6 +181,7 @@ export class SocialAuthService {
           id: true,
           email: true,
           name: true,
+          walletAddress: true,
           createdAt: true,
           updatedAt: true,
           password: true // Need this for the transaction
@@ -189,7 +192,7 @@ export class SocialAuthService {
     // Link social account
     await prisma.socialAccount.create({
       data: {
-        userId: user.id,
+        userId: user!.id,
         provider,
         providerId: profile.id,
         email: 'email' in profile ? profile.email || null : null,
@@ -200,7 +203,7 @@ export class SocialAuthService {
     });
 
     // Return user without password
-    const { password, ...userWithoutPassword } = user;
+    const { password, ...userWithoutPassword } = user!;
     return userWithoutPassword;
   }
 }
