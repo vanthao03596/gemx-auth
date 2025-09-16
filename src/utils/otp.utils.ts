@@ -1,13 +1,14 @@
 /**
  * Simple OTP generation utility following KISS principle
  */
+import { randomInt } from 'crypto';
 
 /**
- * Generate a 6-digit numeric OTP
+ * Generate a 6-digit numeric OTP using cryptographically secure random generation
  * @returns 6-digit string (e.g., "123456")
  */
 export function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 /**
