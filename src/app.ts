@@ -15,7 +15,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: env.CORS_ORIGINS || (env.NODE_ENV === 'production' 
-    ? ['http://localhost.com:5173', 'https://academy.gemx.io'] 
+    ? ['https://yourdomain.com'] 
     : ['http://localhost:3000', 'http://localhost:3001']),
   credentials: true,
 }));
