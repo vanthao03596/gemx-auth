@@ -1,9 +1,9 @@
 module.exports = {
   apps: [
     {
-      name: 'node-skeleton',
+      name: 'gemx-auth',
       script: './dist/server.js',
-      instances: 'max',
+      instances: '1',
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'development',
@@ -11,7 +11,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 3050,
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
