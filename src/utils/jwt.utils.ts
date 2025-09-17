@@ -1,4 +1,3 @@
-import * as jose from 'jose';
 import { env } from '../config/env';
 
 export interface JwtPayload {
@@ -18,6 +17,8 @@ export interface JWK {
 }
 
 export const generateToken = async (payload: Omit<JwtPayload, 'iat' | 'exp'>): Promise<string> => {
+  const jose = await import('jose');
+
   // Decode base64 PEM key
   const privateKeyPem = Buffer.from(env.JWT_PRIVATE_KEY_PEM, 'base64').toString('utf-8');
   const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
@@ -30,6 +31,8 @@ export const generateToken = async (payload: Omit<JwtPayload, 'iat' | 'exp'>): P
 };
 
 export const verifyToken = async (token: string): Promise<JwtPayload> => {
+  const jose = await import('jose');
+
   // Decode base64 PEM key
   const publicKeyPem = Buffer.from(env.JWT_PUBLIC_KEY_PEM, 'base64').toString('utf-8');
   const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
@@ -38,8 +41,9 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   return payload as unknown as JwtPayload;
 };
 
-export const decodeToken = (token: string): JwtPayload | null => {
+export const decodeToken = async (token: string): Promise<JwtPayload | null> => {
   try {
+    const jose = await import('jose');
     const decoded = jose.decodeJwt(token);
     return decoded as unknown as JwtPayload;
   } catch (_error) {
@@ -48,6 +52,8 @@ export const decodeToken = (token: string): JwtPayload | null => {
 };
 
 export const getJwks = async (): Promise<{ keys: JWK[] }> => {
+  const jose = await import('jose');
+
   // Decode base64 PEM key
   const publicKeyPem = Buffer.from(env.JWT_PUBLIC_KEY_PEM, 'base64').toString('utf-8');
   const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
