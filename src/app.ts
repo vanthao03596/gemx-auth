@@ -5,7 +5,7 @@ import compression from 'compression';
 import { authRoutes } from './features/auth/auth.routes';
 import { healthRoutes } from './features/health/health.routes';
 import { userRoutes } from './features/users/user.routes';
-import { globalRateLimit } from './middleware/rateLimiter.middleware';
+// import { globalRateLimit } from './middleware/rateLimiter.middleware';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { env } from './config/env';
 import { successResponse } from './utils/response.utils';
@@ -23,7 +23,7 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use(globalRateLimit);
+// app.use(globalRateLimit);
 
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
