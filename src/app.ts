@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { authRoutes } from './features/auth/auth.routes';
 import { healthRoutes } from './features/health/health.routes';
+import { userRoutes } from './features/users/user.routes';
 import { globalRateLimit } from './middleware/rateLimiter.middleware';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { env } from './config/env';
@@ -26,6 +27,7 @@ app.use(globalRateLimit);
 
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
 
 app.get('/', (_req, res) => {
   successResponse(res, {
