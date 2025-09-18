@@ -24,7 +24,7 @@ export const validateRequest = <T extends z.ZodTypeAny>(
 
       next();
     } catch (error) {
-     if (error instanceof z.ZodError) {
+      if (error instanceof z.ZodError) {
         next(new ZodValidationError(error, target));
       } else {
         next(error);
@@ -33,13 +33,13 @@ export const validateRequest = <T extends z.ZodTypeAny>(
   };
 };
 
-export const validateBody = <T extends z.ZodTypeAny>(schema: T) => 
+export const validateBody = <T extends z.ZodTypeAny>(schema: T) =>
   validateRequest(schema, 'body');
 
-export const validateParams = <T extends z.ZodTypeAny>(schema: T) => 
+export const validateParams = <T extends z.ZodTypeAny>(schema: T) =>
   validateRequest(schema, 'params');
 
-export const validateQuery = <T extends z.ZodTypeAny>(schema: T) => 
+export const validateQuery = <T extends z.ZodTypeAny>(schema: T) =>
   validateRequest(schema, 'query');
 
 function getValidationData(req: Request, target: ValidationTarget) {

@@ -45,6 +45,7 @@ export class AuthService {
         email: true,
         name: true,
         walletAddress: true,
+        referrerId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -91,6 +92,7 @@ export class AuthService {
         email: true,
         name: true,
         walletAddress: true,
+        referrerId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -109,7 +111,7 @@ export class AuthService {
     // Create or find user
     let user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, name: true, walletAddress: true }
+      select: { id: true, email: true, name: true, walletAddress: true, referrerId: true }
     });
 
     if (!user) {
@@ -120,7 +122,7 @@ export class AuthService {
           password: '', // Empty password for OTP-only users
           name: email.split('@')[0] || email // Use email prefix as default name, fallback to email
         },
-        select: { id: true, email: true, name: true, walletAddress: true }
+        select: { id: true, email: true, name: true, walletAddress: true, referrerId: true }
       });
     }
 
@@ -162,6 +164,7 @@ export class AuthService {
             email: true,
             name: true,
             walletAddress: true,
+            referrerId: true,
             createdAt: true,
             updatedAt: true,
           }
@@ -263,6 +266,7 @@ export class AuthService {
         email: true,
         name: true,
         walletAddress: true,
+        referrerId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -281,6 +285,7 @@ export class AuthService {
           email: true,
           name: true,
           walletAddress: true,
+          referrerId: true,
           createdAt: true,
           updatedAt: true,
         },

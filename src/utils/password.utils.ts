@@ -28,9 +28,6 @@ export const validatePasswordStrength = (password: string): boolean => {
   const hasNumbers = /\d/.test(password);
 
   return (
-    password.length >= minLength &&
-    hasUpperCase &&
-    hasLowerCase &&
-    hasNumbers
+    password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers
   );
 };

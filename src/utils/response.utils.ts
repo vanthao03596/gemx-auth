@@ -1,13 +1,13 @@
 import { Response } from 'express';
 import { env } from '../config/env';
-import { 
-  ApiResponse, 
-  PaginatedResponse, 
-  ErrorResponse, 
-  PaginationMeta, 
+import {
+  ApiResponse,
+  PaginatedResponse,
+  ErrorResponse,
+  PaginationMeta,
   ValidationError,
   ErrorCode,
-  HttpStatus 
+  HttpStatus,
 } from '../types/response.types';
 import { ZodValidationError } from './errors';
 
@@ -22,7 +22,7 @@ export const successResponse = <T>(
     success: true,
     message,
     ...(data !== undefined && { data }),
-    ...(meta && { meta })
+    ...(meta && { meta }),
   };
 
   res.status(statusCode).json(response);
@@ -39,7 +39,7 @@ export const paginatedResponse = <T>(
     success: true,
     message,
     data,
-    meta
+    meta,
   };
 
   res.status(statusCode).json(response);
@@ -58,24 +58,25 @@ export const errorResponse = (
     message,
     ...(errorCode && { error_code: errorCode }),
     ...(errors && errors.length > 0 && { errors }),
-    ...(env.NODE_ENV === 'development' && stack && { stack })
+    ...(env.NODE_ENV === 'development' && stack && { stack }),
   };
 
   res.status(statusCode).json(response);
 };
 
-export const handleValidationError = (res: Response, error: ZodValidationError): void => {
+export const handleValidationError = (
+  res: Response,
+  error: ZodValidationError
+): void => {
   const validationErrors = error.zodError.issues.map((issue) => {
-    const field = issue.path.length > 0 
-      ? issue.path.join('.') 
-      : error.target;
-    
+    const field = issue.path.length > 0 ? issue.path.join('.') : error.target;
+
     let message = issue.message;
 
     if (issue.path.length === 0) {
       message = `${error.target.charAt(0).toUpperCase() + error.target.slice(1)} is required`;
     }
-    
+
     return { field, message };
   });
 
@@ -89,7 +90,7 @@ export const handleValidationError = (res: Response, error: ZodValidationError):
 };
 
 export const handleAuthenticationError = (
-  res: Response, 
+  res: Response,
   message: string = 'Authentication required'
 ): void => {
   errorResponse(
@@ -104,22 +105,12 @@ export const handleNotFoundError = (
   res: Response,
   message: string = 'Resource not found'
 ): void => {
-  errorResponse(
-    res,
-    message,
-    HttpStatus.NOT_FOUND,
-    ErrorCode.NOT_FOUND
-  );
+  errorResponse(res, message, HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND);
 };
 
 export const handleConflictError = (
   res: Response,
   message: string = 'Resource already exists'
 ): void => {
-  errorResponse(
-    res,
-    message,
-    HttpStatus.CONFLICT,
-    ErrorCode.CONFLICT
-  );
+  errorResponse(res, message, HttpStatus.CONFLICT, ErrorCode.CONFLICT);
 };

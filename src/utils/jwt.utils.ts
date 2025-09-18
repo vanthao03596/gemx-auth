@@ -16,11 +16,15 @@ export interface JWK {
   e: string;
 }
 
-export const generateToken = async (payload: Omit<JwtPayload, 'iat' | 'exp'>): Promise<string> => {
+export const generateToken = async (
+  payload: Omit<JwtPayload, 'iat' | 'exp'>
+): Promise<string> => {
   const jose = await import('jose');
 
   // Decode base64 PEM key
-  const privateKeyPem = Buffer.from(env.JWT_PRIVATE_KEY_PEM, 'base64').toString('utf-8');
+  const privateKeyPem = Buffer.from(env.JWT_PRIVATE_KEY_PEM, 'base64').toString(
+    'utf-8'
+  );
   const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
 
   return await new jose.SignJWT(payload)
@@ -34,14 +38,18 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   const jose = await import('jose');
 
   // Decode base64 PEM key
-  const publicKeyPem = Buffer.from(env.JWT_PUBLIC_KEY_PEM, 'base64').toString('utf-8');
+  const publicKeyPem = Buffer.from(env.JWT_PUBLIC_KEY_PEM, 'base64').toString(
+    'utf-8'
+  );
   const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
 
   const { payload } = await jose.jwtVerify(token, publicKey);
   return payload as unknown as JwtPayload;
 };
 
-export const decodeToken = async (token: string): Promise<JwtPayload | null> => {
+export const decodeToken = async (
+  token: string
+): Promise<JwtPayload | null> => {
   try {
     const jose = await import('jose');
     const decoded = jose.decodeJwt(token);
@@ -55,7 +63,9 @@ export const getJwks = async (): Promise<{ keys: JWK[] }> => {
   const jose = await import('jose');
 
   // Decode base64 PEM key
-  const publicKeyPem = Buffer.from(env.JWT_PUBLIC_KEY_PEM, 'base64').toString('utf-8');
+  const publicKeyPem = Buffer.from(env.JWT_PUBLIC_KEY_PEM, 'base64').toString(
+    'utf-8'
+  );
   const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
   const jwk = await jose.exportJWK(publicKey);
 
@@ -65,8 +75,8 @@ export const getJwks = async (): Promise<{ keys: JWK[] }> => {
         ...jwk,
         use: 'sig',
         alg: 'RS256',
-        kid: 'default'
-      } as JWK
-    ]
+        kid: 'default',
+      } as JWK,
+    ],
   };
 };

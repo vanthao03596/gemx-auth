@@ -12,13 +12,10 @@ export interface PrismaResult<T> {
   total: number;
 }
 
-export const calculatePagination = (options: PaginationOptions): { skip: number; take: number; page: number } => {
-  const {
-    page = 1,
-    limit,
-    defaultLimit = 10,
-    maxLimit = 100
-  } = options;
+export const calculatePagination = (
+  options: PaginationOptions
+): { skip: number; take: number; page: number } => {
+  const { page = 1, limit, defaultLimit = 10, maxLimit = 100 } = options;
 
   const currentPage = Math.max(1, page);
   const perPage = limit ? Math.min(Math.max(1, limit), maxLimit) : defaultLimit;
@@ -27,7 +24,7 @@ export const calculatePagination = (options: PaginationOptions): { skip: number;
   return {
     skip,
     take: perPage,
-    page: currentPage
+    page: currentPage,
   };
 };
 
@@ -37,18 +34,20 @@ export const createPaginationMeta = (
   perPage: number
 ): PaginationMeta => {
   const totalPages = Math.ceil(totalCount / perPage);
-  
+
   return {
     total_count: totalCount,
     current_page: currentPage,
     total_pages: totalPages,
     per_page: perPage,
     has_next: currentPage < totalPages,
-    has_previous: currentPage > 1
+    has_previous: currentPage > 1,
   };
 };
 
-export const getPaginationFromQuery = (query: Record<string, unknown>): PaginationOptions => {
+export const getPaginationFromQuery = (
+  query: Record<string, unknown>
+): PaginationOptions => {
   const page = query.page ? parseInt(query.page as string, 10) : undefined;
   const limit = query.limit ? parseInt(query.limit as string, 10) : undefined;
 
@@ -65,10 +64,10 @@ export const paginateWithPrisma = async <T>(
   options: PaginationOptions
 ): Promise<PrismaResult<T>> => {
   const { skip, take } = calculatePagination(options);
-  
+
   const [data, total] = await Promise.all([
     prismaQuery({ skip, take }),
-    countQuery()
+    countQuery(),
   ]);
 
   return { data, total };

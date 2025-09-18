@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from './user.service';
-import { BatchUsersInput } from './user.validation';
+import { BatchUsersInput, SetReferrerInput } from './user.validation';
 import { successResponse } from '../../utils/response.utils';
 import { NotFoundError } from '../../utils/errors';
 
@@ -39,6 +39,40 @@ export class UserController {
       }
 
       successResponse(res, { user }, 'User retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReferralCode(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const referralCode = await this.userService.getReferralCode(userId);
+
+      successResponse(res, { referral_code: referralCode }, 'Referral code retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async setReferrer(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const data = req.validatedBody as SetReferrerInput;
+      const user = await this.userService.setReferrer(userId, data.referralCode);
+
+      successResponse(res, { user }, 'Referrer set successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReferrals(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const referrals = await this.userService.getReferrals(userId);
+
+      successResponse(res, { referrals }, 'Referrals retrieved successfully');
     } catch (error) {
       next(error);
     }

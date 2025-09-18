@@ -6,8 +6,9 @@ export const setCache = async (
   ttlSeconds?: number
 ): Promise<void> => {
   try {
-    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-    
+    const stringValue =
+      typeof value === 'string' ? value : JSON.stringify(value);
+
     if (ttlSeconds) {
       await redis.setEx(key, ttlSeconds, stringValue);
     } else {
@@ -22,7 +23,7 @@ export const setCache = async (
 export const getCache = async <T = unknown>(key: string): Promise<T | null> => {
   try {
     const value = await redis.get(key);
-    
+
     if (!value) {
       return null;
     }
@@ -62,11 +63,11 @@ export const incrementCache = async (
 ): Promise<number> => {
   try {
     const count = await redis.incr(key);
-    
+
     if (ttlSeconds && count === 1) {
       await redis.expire(key, ttlSeconds);
     }
-    
+
     return count;
   } catch (error) {
     console.error('Redis increment error:', error);

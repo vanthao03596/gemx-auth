@@ -27,7 +27,6 @@ export const disconnectRedis = async () => {
       redis.destroy();
       console.log('Redis disconnected');
     }
-
   } catch (error) {
     console.error('Error disconnecting from Redis:', error);
   }

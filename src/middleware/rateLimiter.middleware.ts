@@ -18,7 +18,11 @@ export const createRateLimiter = (options: RateLimitOptions) => {
     message = 'Too many requests, please try again later.',
   } = options;
 
-  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const key = `rate_limit:${keyGenerator(req)}`;
       const currentCount = await redis.get(key);
@@ -27,7 +31,8 @@ export const createRateLimiter = (options: RateLimitOptions) => {
         return next(new RateLimitError(message));
       }
 
-      await redis.multi()
+      await redis
+        .multi()
         .incr(key)
         .expire(key, Math.ceil(windowMs / 1000))
         .exec();

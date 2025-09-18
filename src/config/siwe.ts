@@ -24,4 +24,5 @@ export const siweClient = createSiweClient();
 
 export const getSiweChainId = (): number => env.CHAIN_ID;
 export const getSiweDomains = (): string[] => env.SIWE_DOMAINS;
-export const isValidSiweDomain = (domain: string): boolean => env.SIWE_DOMAINS.includes(domain);
+export const isValidSiweDomain = (domain: string): boolean =>
+  env.SIWE_DOMAINS.includes(domain);

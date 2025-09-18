@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.string().default('3000').transform(Number),
   DATABASE_URL: z.string(),
   REDIS_URL: z.string().default('redis://localhost:6379'),
@@ -14,18 +16,31 @@ const envSchema = z.object({
   JWT_PUBLIC_KEY_PEM: z.string(),
   RATE_LIMIT_WINDOW: z.string().default('15m'),
   RATE_LIMIT_MAX: z.string().default('5').transform(Number),
-  CORS_ORIGINS: z.string().optional().transform(val => val ? val.split(',') : undefined),
+  CORS_ORIGINS: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : undefined)),
 
   // OAuth configuration
   GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required'),
-  GOOGLE_REDIRECT_URI: z.string().url('Google Redirect URI must be a valid URL'),
+  GOOGLE_REDIRECT_URI: z
+    .string()
+    .url('Google Redirect URI must be a valid URL'),
   TWITTER_CLIENT_ID: z.string().min(1, 'Twitter Client ID is required'),
   TWITTER_CLIENT_SECRET: z.string().min(1, 'Twitter Client Secret is required'),
-  TWITTER_REDIRECT_URI: z.string().url('Twitter Redirect URI must be a valid URL'),
-  FRONTEND_DEFAULT_URL: z.string().url('Frontend Default URL must be a valid URL').default('http://localhost:3000'),
+  TWITTER_REDIRECT_URI: z
+    .string()
+    .url('Twitter Redirect URI must be a valid URL'),
+  FRONTEND_DEFAULT_URL: z
+    .string()
+    .url('Frontend Default URL must be a valid URL')
+    .default('http://localhost:3000'),
 
-  SMTP_HOST: z.string().min(1, 'SMTP Host is required').default('smtp.mailgun.org'),
+  SMTP_HOST: z
+    .string()
+    .min(1, 'SMTP Host is required')
+    .default('smtp.mailgun.org'),
   SMTP_PORT: z.string().default('587').transform(Number),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
@@ -33,7 +48,10 @@ const envSchema = z.object({
 
   // SIWE configuration
   RPC_URL: z.string().url('RPC URL must be a valid URL'),
-  SIWE_DOMAINS: z.string().min(1, 'SIWE domains are required').transform(val => val.split(',')),
+  SIWE_DOMAINS: z
+    .string()
+    .min(1, 'SIWE domains are required')
+    .transform((val) => val.split(',')),
   CHAIN_ID: z.string().default('1').transform(Number),
 });
 
@@ -44,8 +62,12 @@ const parseEnv = () => {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.issues.map(err => err.path.join('.')).join(', ');
-      throw new Error(`Missing or invalid environment variables: ${missingVars}`);
+      const missingVars = error.issues
+        .map((err) => err.path.join('.'))
+        .join(', ');
+      throw new Error(
+        `Missing or invalid environment variables: ${missingVars}`
+      );
     }
     throw error;
   }

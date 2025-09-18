@@ -122,6 +122,7 @@ export class SocialAuthService {
             email: true,
             name: true,
             walletAddress: true,
+            referrerId: true,
             createdAt: true,
             updatedAt: true
           }
@@ -158,6 +159,7 @@ export class SocialAuthService {
           email: true,
           name: true,
           walletAddress: true,
+          referrerId: true,
           createdAt: true,
           updatedAt: true,
           password: true // Need this for the transaction
@@ -182,6 +184,7 @@ export class SocialAuthService {
           email: true,
           name: true,
           walletAddress: true,
+          referrerId: true,
           createdAt: true,
           updatedAt: true,
           password: true // Need this for the transaction

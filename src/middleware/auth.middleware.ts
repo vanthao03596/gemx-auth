@@ -10,7 +10,7 @@ export const authenticateToken = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') 
+    const token = authHeader?.startsWith('Bearer ')
       ? authHeader.substring(7)
       : null;
 
@@ -19,7 +19,7 @@ export const authenticateToken = async (
     }
 
     const decoded = await verifyToken(token);
-    
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -27,6 +27,7 @@ export const authenticateToken = async (
         email: true,
         name: true,
         walletAddress: true,
+        referrerId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -50,7 +51,7 @@ export const optionalAuth = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') 
+    const token = authHeader?.startsWith('Bearer ')
       ? authHeader.substring(7)
       : null;
 
@@ -59,7 +60,7 @@ export const optionalAuth = async (
     }
 
     const decoded = await verifyToken(token);
-    
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -67,6 +68,7 @@ export const optionalAuth = async (
         email: true,
         name: true,
         walletAddress: true,
+        referrerId: true,
         createdAt: true,
         updatedAt: true,
       },

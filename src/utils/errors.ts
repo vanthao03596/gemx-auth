@@ -46,6 +46,12 @@ export class ConflictError extends AppError {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message: string = 'Bad request') {
+    super(message, HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR);
+  }
+}
+
 export class RateLimitError extends AppError {
   constructor(message: string = 'Too many requests') {
     super(message, HttpStatus.TOO_MANY_REQUESTS);
@@ -62,11 +68,12 @@ export class ZodValidationError extends AppError {
   public readonly zodError: z.ZodError;
   public readonly target: ValidationTarget;
 
-  constructor(
-    zodError: z.ZodError,
-    target: ValidationTarget,
-  ) {
-    super('Validation Error', HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR);
+  constructor(zodError: z.ZodError, target: ValidationTarget) {
+    super(
+      'Validation Error',
+      HttpStatus.BAD_REQUEST,
+      ErrorCode.VALIDATION_ERROR
+    );
     this.zodError = zodError;
     this.target = target;
   }

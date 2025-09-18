@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClientKnownRequestError, PrismaClientUnknownRequestError, PrismaClientValidationError } from '@prisma/client/runtime/library';
+import {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+  PrismaClientValidationError,
+} from '@prisma/client/runtime/library';
 import { env } from '../config/env';
 import { errorResponse, handleValidationError } from '../utils/response.utils';
 import { ErrorCode, HttpStatus } from '../types/response.types';
@@ -16,7 +20,8 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  let statusCode = error.statusCode || error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+  let statusCode =
+    error.statusCode || error.status || HttpStatus.INTERNAL_SERVER_ERROR;
   let message = error.message || 'Internal Server Error';
   let errorCode: ErrorCode | undefined;
 
@@ -29,7 +34,14 @@ export const errorHandler = (
 
   if (error instanceof AppError) {
     const stack = env.NODE_ENV === 'development' ? error.stack : undefined;
-    errorResponse(res, error.message, error.statusCode, error.errorCode, undefined, stack);
+    errorResponse(
+      res,
+      error.message,
+      error.statusCode,
+      error.errorCode,
+      undefined,
+      stack
+    );
     return;
   }
 
@@ -74,5 +86,10 @@ export const errorHandler = (
 };
 
 export const notFound = (req: Request, res: Response) => {
-  errorResponse(res, `Route ${req.originalUrl} not found`, HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND);
+  errorResponse(
+    res,
+    `Route ${req.originalUrl} not found`,
+    HttpStatus.NOT_FOUND,
+    ErrorCode.NOT_FOUND
+  );
 };

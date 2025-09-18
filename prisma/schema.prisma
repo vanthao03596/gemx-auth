@@ -13,8 +13,11 @@ model User {
   password       String          @map("password")
   name           String          @map("name")
   walletAddress  String?         @unique @map("wallet_address")
+  referrerId     Int?            @map("referrer_id")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
+  referrer       User?           @relation("UserReferrals", fields: [referrerId], references: [id])
+  referrals      User[]          @relation("UserReferrals")
   otpCodes       OtpCode[]
   socialAccounts SocialAccount[]
 
