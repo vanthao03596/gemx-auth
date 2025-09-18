@@ -5,6 +5,8 @@ import compression from 'compression';
 import { authRoutes } from './features/auth/auth.routes';
 import { healthRoutes } from './features/health/health.routes';
 import { userRoutes } from './features/users/user.routes';
+import { walletRoutes } from './features/wallet/wallet.routes';
+import { internalWalletRoutes } from './features/wallet/internal-wallet.routes';
 // import { globalRateLimit } from './middleware/rateLimiter.middleware';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { env } from './config/env';
@@ -28,6 +30,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/wallet', walletRoutes);
+app.use('/internal/v1/wallet', internalWalletRoutes);
 
 app.get('/', (_req, res) => {
   successResponse(res, {

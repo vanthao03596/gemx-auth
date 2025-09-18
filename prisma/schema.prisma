@@ -20,6 +20,7 @@ model User {
   referrals      User[]          @relation("UserReferrals")
   otpCodes       OtpCode[]
   socialAccounts SocialAccount[]
+  wallets        Wallet[]
 
   @@map("users")
 }
@@ -53,4 +54,41 @@ model SocialAccount {
   @@unique([provider, providerId])
   @@index([userId], map: "social_accounts_user_id_fkey")
   @@map("social_accounts")
+}
+
+model Wallet {
+  id       Int         @id @default(autoincrement())
+  userId   Int         @map("user_id")
+  currency String      @map("currency") // "points" or "usdt"
+  balance  Int         @default(0) @map("balance") // Amount in base units (points or cents)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@unique([userId, currency])
+  @@index([userId], map: "wallets_user_id_fkey")
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id            Int                   @id @default(autoincrement())
+  walletId      Int                   @map("wallet_id")
+  type          WalletTransactionType @map("type")
+  amount        Int                   @map("amount")         // Amount in base units (positive for credit, negative for debit)
+  description   String?               @map("description")    // User-facing description
+  internalNotes String?               @map("internal_notes") // Service attribution for audit
+  referenceId   String?               @map("reference_id")   // ID of related resource
+  createdAt     DateTime              @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId], map: "wallet_transactions_wallet_id_fkey")
+  @@map("wallet_transactions")
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
 }

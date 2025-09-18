@@ -53,6 +53,36 @@ const envSchema = z.object({
     .min(1, 'SIWE domains are required')
     .transform((val) => val.split(',')),
   CHAIN_ID: z.string().default('1').transform(Number),
+
+  // Service-to-service authentication for wallet system
+  SERVICE_API_KEYS: z
+    .string()
+    .min(1, 'Service API keys JSON is required')
+    .transform((val) => {
+      try {
+        const parsed = JSON.parse(val);
+        if (typeof parsed !== 'object' || parsed === null) {
+          throw new Error('SERVICE_API_KEYS must be a valid JSON object');
+        }
+        return parsed;
+      } catch (error) {
+        throw new Error('SERVICE_API_KEYS must be valid JSON');
+      }
+    }),
+  ALLOWED_SERVICES: z
+    .string()
+    .min(1, 'Allowed services JSON array is required')
+    .transform((val) => {
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) {
+          throw new Error('ALLOWED_SERVICES must be a valid JSON array');
+        }
+        return parsed;
+      } catch (error) {
+        throw new Error('ALLOWED_SERVICES must be valid JSON array');
+      }
+    }),
 });
 
 export type Env = z.infer<typeof envSchema>;
