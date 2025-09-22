@@ -77,4 +77,15 @@ export class UserController {
       next(error);
     }
   }
+
+  async getReferralsCount(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const referralsCount = await this.userService.getReferralsCount(userId);
+
+      successResponse(res, { referralsCount }, 'Referrals count retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }

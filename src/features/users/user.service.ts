@@ -110,4 +110,10 @@ export class UserService {
       }
     });
   }
+
+  async getReferralsCount(userId: number): Promise<number> {
+    return prisma.user.count({
+      where: { referrerId: userId },
+    });
+  }
 }

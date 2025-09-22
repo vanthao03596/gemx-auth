@@ -33,6 +33,12 @@ router.get(
 );
 
 router.get(
+  '/referrals-count',
+  authenticateToken,
+  userController.getReferralsCount.bind(userController)
+);
+
+router.get(
   '/:id',
   userController.getUser.bind(userController)
 );
