@@ -48,6 +48,7 @@ export class AuthService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
+        lastDailyLogin: true
       },
     });
 
@@ -93,6 +94,7 @@ export class AuthService {
         name: true,
         walletAddress: true,
         referrerId: true,
+        lastDailyLogin: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -167,6 +169,7 @@ export class AuthService {
             referrerId: true,
             createdAt: true,
             updatedAt: true,
+            lastDailyLogin: true
           }
         }
       }
@@ -269,6 +272,7 @@ export class AuthService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
+        lastDailyLogin: true
       },
     });
 
@@ -288,6 +292,7 @@ export class AuthService {
           referrerId: true,
           createdAt: true,
           updatedAt: true,
+          lastDailyLogin: true
         },
       });
     }
@@ -299,5 +304,12 @@ export class AuthService {
     });
 
     return { user, token };
+  }
+
+  async updateLastDailyLogin(userId: number, date: Date): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastDailyLogin: date },
+    });
   }
 }

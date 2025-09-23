@@ -15,6 +15,7 @@ export class UserService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
+        lastDailyLogin: true
       }
     });
   }
@@ -30,6 +31,7 @@ export class UserService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
+        lastDailyLogin: true
       },
     });
 
@@ -92,6 +94,7 @@ export class UserService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
+        lastDailyLogin: true
       }
     });
   }
@@ -107,6 +110,7 @@ export class UserService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
+        lastDailyLogin: true
       }
     });
   }

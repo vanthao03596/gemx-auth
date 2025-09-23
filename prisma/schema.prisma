@@ -14,6 +14,7 @@ model User {
   name           String          @map("name")
   walletAddress  String?         @unique @map("wallet_address")
   referrerId     Int?            @map("referrer_id")
+  lastDailyLogin DateTime?       @map("last_daily_login")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   referrer       User?           @relation("UserReferrals", fields: [referrerId], references: [id])

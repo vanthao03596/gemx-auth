@@ -5,12 +5,15 @@ import { successResponse } from '../../utils/response.utils';
 import { HttpStatus } from '../../types/response.types';
 import { AuthenticationError, NotFoundError } from '../../utils/errors';
 import { getJwks } from '../../utils/jwt.utils';
+import { WalletService } from '../wallet/wallet.service';
 
 export class AuthController {
   private authService: AuthService;
+  private walletService: WalletService;
 
   constructor() {
     this.authService = new AuthService();
+    this.walletService = new WalletService();
   }
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -44,6 +47,29 @@ export class AuthController {
 
       if (!user) {
         throw new NotFoundError('User not found');
+      }
+
+      // Check if this is the first call of the day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const isFirstCallToday = !user.lastDailyLogin ||
+        new Date(user.lastDailyLogin).getTime() < today.getTime();
+
+        console.log(isFirstCallToday)
+      if (isFirstCallToday) {
+        // Credit 20 points for daily login
+        await this.walletService.creditWallet(
+          user.id,
+          'points',
+          20,
+          'Daily login bonus',
+          `daily_login_${today.toISOString().split('T')[0]}`,
+          'auth-service'
+        );
+
+        // Update last daily login
+        await this.authService.updateLastDailyLogin(user.id, new Date());
       }
 
       successResponse(res, { user }, 'Profile retrieved successfully');
