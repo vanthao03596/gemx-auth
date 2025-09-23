@@ -24,9 +24,7 @@ const validateServiceAuth = async (
 
     // Define service permissions
     const servicePermissions: Record<string, string[]> = {
-      'order-service': ['credit', 'debit', 'balance'],
-      'referral-service': ['credit', 'balance'],
-      'payment-service': ['credit', 'debit', 'balance'],
+      'academy-service': ['credit', 'debit', 'balance'],
     };
 
     return {

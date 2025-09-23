@@ -56,13 +56,12 @@ export class AuthController {
       const isFirstCallToday = !user.lastDailyLogin ||
         new Date(user.lastDailyLogin).getTime() < today.getTime();
 
-        console.log(isFirstCallToday)
       if (isFirstCallToday) {
-        // Credit 20 points for daily login
+        // Credit 10 gemx for daily login
         await this.walletService.creditWallet(
           user.id,
-          'points',
-          20,
+          'gemx',
+          10,
           'Daily login bonus',
           `daily_login_${today.toISOString().split('T')[0]}`,
           'auth-service'

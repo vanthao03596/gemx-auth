@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon",
+    "dev": "TZ=UTC nodemon",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",

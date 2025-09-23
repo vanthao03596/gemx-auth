@@ -3,6 +3,7 @@ import { PaginationMeta } from '../../types/response.types';
 export interface WalletBalance {
   points: number;
   usdt: number;
+  gemx: number;
 }
 
 export interface WalletTransactionResponse {

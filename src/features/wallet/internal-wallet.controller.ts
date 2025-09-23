@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { WalletService } from './wallet.service';
-import { InternalCreditInput, InternalDebitInput, InternalBalanceInput } from './internal-wallet.validation';
+import { InternalCreditInput, InternalDebitInput, InternalBalanceInput, GetTransactionInput } from './internal-wallet.validation';
 import { successResponse } from '../../utils/response.utils';
 import { setCache } from '../../utils/redis.utils';
 
@@ -64,6 +64,28 @@ export class InternalWalletController {
       const balance = await this.walletService.getBalance(userId);
 
       successResponse(res, balance, 'Balance retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTransactionByReference(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { walletType, transactionType, referenceId, userId } = req.validatedQuery as GetTransactionInput;
+
+      const transaction = await this.walletService.getTransactionByReference(
+        walletType,
+        transactionType,
+        referenceId,
+        userId
+      );
+
+      if (!transaction) {
+        successResponse(res, null, 'Transaction not found');
+        return;
+      }
+
+      successResponse(res, { transaction }, 'Transaction retrieved successfully');
     } catch (error) {
       next(error);
     }

@@ -72,7 +72,7 @@ export class UserService {
     let referrerId: number;
     try {
       referrerId = decodeReferralCode(referralCode);
-    } catch (error) {
+    } catch (_error) {
       throw new BadRequestError('Invalid referral code');
     }
 

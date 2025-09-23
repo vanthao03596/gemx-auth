@@ -1,7 +1,7 @@
 import { WalletTransaction } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
-import { WalletBalance, WalletTransactionResponse, PaginatedResponse } from './wallet.types';
+import { WalletBalance, WalletTransactionResponse, PaginatedResponse, WalletTransactionAudit } from './wallet.types';
 
 export class WalletService {
   async getBalance(userId: number): Promise<WalletBalance> {
@@ -12,13 +12,14 @@ export class WalletService {
 
     return {
       points: wallets.find(w => w.currency === 'points')?.balance || 0,
-      usdt: wallets.find(w => w.currency === 'usdt')?.balance || 0
+      usdt: wallets.find(w => w.currency === 'usdt')?.balance || 0,
+      gemx: wallets.find(w => w.currency === 'gemx')?.balance || 0
     };
   }
 
   async getTransactions(
     userId: number,
-    currency?: 'points' | 'usdt',
+    currency?: 'points' | 'usdt' | 'gemx',
     page: number = 1,
     limit: number = 20
   ): Promise<PaginatedResponse<WalletTransactionResponse>> {
@@ -69,7 +70,7 @@ export class WalletService {
 
   async creditWallet(
     userId: number,
-    currency: 'points' | 'usdt',
+    currency: 'points' | 'usdt' | 'gemx',
     amount: number,
     userDescription: string,      // Clean user-facing description
     referenceId?: string,
@@ -105,7 +106,7 @@ export class WalletService {
 
   async debitWallet(
     userId: number,
-    currency: 'points' | 'usdt',
+    currency: 'points' | 'usdt' | 'gemx',
     amount: number,
     userDescription: string,      // Clean user-facing description
     referenceId?: string,
@@ -158,5 +159,41 @@ export class WalletService {
       orderId,
       'order-service'          // Service attribution for audit
     );
+  }
+
+  async getTransactionByReference(
+    walletType: 'points' | 'usdt' | 'gemx',
+    transactionType: 'CREDIT' | 'DEBIT',
+    referenceId: string,
+    userId?: number
+  ): Promise<WalletTransactionAudit | null> {
+    const transaction = await prisma.walletTransaction.findFirst({
+      where: {
+        wallet: {
+          currency: walletType,
+          ...(userId && { userId })
+        },
+        type: transactionType,
+        referenceId: {
+          contains: referenceId
+        }
+      },
+      select: {
+        id: true,
+        walletId: true,
+        type: true,
+        amount: true,
+        description: true,
+        internalNotes: true,
+        referenceId: true,
+        createdAt: true,
+        wallet: {
+          select: { currency: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return transaction;
   }
 }
