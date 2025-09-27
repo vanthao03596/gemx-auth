@@ -38,6 +38,12 @@ router.get(
   userController.getReferralsCount.bind(userController)
 );
 
+router.post(
+  '/update-daily-login',
+  authenticateToken,
+  userController.updateDailyLogin.bind(userController)
+);
+
 router.get(
   '/:id',
   userController.getUser.bind(userController)

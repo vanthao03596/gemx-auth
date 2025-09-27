@@ -4,6 +4,10 @@ export interface WalletBalance {
   points: number;
   usdt: number;
   gemx: number;
+  gap: number;
+  commission: number;
+  gap_ref: number;
+  commission_ref: number;
 }
 
 export interface WalletTransactionResponse {

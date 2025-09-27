@@ -115,9 +115,23 @@ export class UserService {
     });
   }
 
-  async getReferralsCount(userId: number): Promise<number> {
-    return prisma.user.count({
-      where: { referrerId: userId },
+  async getReferralsCount(userId: number){
+    return Promise.all([
+       prisma.user.count({
+        where: { referrerId: userId },
+      }),
+      prisma.user.count({
+        where: { referrerId: userId, lastDailyLogin: { not: null } },
+      }),
+    ]);
+  }
+
+   async updateDailyLogin(userId: number): Promise<User> {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        lastDailyLogin: new Date()
+      }
     });
   }
 }

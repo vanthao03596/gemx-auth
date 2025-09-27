@@ -81,9 +81,20 @@ export class UserController {
   async getReferralsCount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const referralsCount = await this.userService.getReferralsCount(userId);
+      const [referralsCount, referralsActiveCount] = await this.userService.getReferralsCount(userId);
 
-      successResponse(res, { referralsCount }, 'Referrals count retrieved successfully');
+      successResponse(res, { referralsCount, referralsActiveCount }, 'Referrals count retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateDailyLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const user = await this.userService.updateDailyLogin(userId);
+
+      successResponse(res, { user }, 'Update daily login successfully');
     } catch (error) {
       next(error);
     }

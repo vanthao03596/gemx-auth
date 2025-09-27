@@ -13,13 +13,17 @@ export class WalletService {
     return {
       points: wallets.find(w => w.currency === 'points')?.balance || 0,
       usdt: wallets.find(w => w.currency === 'usdt')?.balance || 0,
-      gemx: wallets.find(w => w.currency === 'gemx')?.balance || 0
+      gemx: wallets.find(w => w.currency === 'gemx')?.balance || 0,
+      gap: wallets.find(w => w.currency === 'gap')?.balance || 0,
+      commission: wallets.find(w => w.currency === 'commission')?.balance || 0,
+      gap_ref: wallets.find(w => w.currency === 'gap_ref')?.balance || 0,
+      commission_ref: wallets.find(w => w.currency === 'commission_ref')?.balance || 0,
     };
   }
 
   async getTransactions(
     userId: number,
-    currency?: 'points' | 'usdt' | 'gemx',
+    currency?: 'points' | 'usdt' | 'gemx' | 'gap' | 'commission' | 'gap_ref' | 'commission_ref',
     page: number = 1,
     limit: number = 20
   ): Promise<PaginatedResponse<WalletTransactionResponse>> {
@@ -70,7 +74,7 @@ export class WalletService {
 
   async creditWallet(
     userId: number,
-    currency: 'points' | 'usdt' | 'gemx',
+    currency: 'points' | 'usdt' | 'gemx' | 'gap' | 'commission' | 'gap_ref' | 'commission_ref',
     amount: number,
     userDescription: string,      // Clean user-facing description
     referenceId?: string,
@@ -106,7 +110,7 @@ export class WalletService {
 
   async debitWallet(
     userId: number,
-    currency: 'points' | 'usdt' | 'gemx',
+    currency: 'points' | 'usdt' | 'gemx' | 'gap' | 'commission' | 'gap_ref' | 'commission_ref',
     amount: number,
     userDescription: string,      // Clean user-facing description
     referenceId?: string,
@@ -162,7 +166,7 @@ export class WalletService {
   }
 
   async getTransactionByReference(
-    walletType: 'points' | 'usdt' | 'gemx',
+    walletType: 'points' | 'usdt' | 'gemx' | 'gap' | 'commission' | 'gap_ref' | 'commission_ref',
     transactionType: 'CREDIT' | 'DEBIT',
     referenceId: string,
     userId?: number
