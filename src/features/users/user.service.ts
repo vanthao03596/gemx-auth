@@ -2,6 +2,8 @@ import { User } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { generateReferralCode, decodeReferralCode } from '../../utils/referral.utils';
 import { NotFoundError, ConflictError, BadRequestError } from '../../utils/errors';
+import { sendWebhooks } from '../../utils/webhook.utils';
+import { env } from '../../config/env';
 
 export class UserService {
   async getUsersByIds(userIds: number[]): Promise<Omit<User, 'password'>[]> {
@@ -83,7 +85,7 @@ export class UserService {
       throw new BadRequestError('Circular reference detected');
     }
 
-    return prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { referrerId },
       select: {
@@ -97,6 +99,22 @@ export class UserService {
         lastDailyLogin: true
       }
     });
+
+    // Send webhook notification (fire-and-forget)
+    void sendWebhooks(
+      env.WEBHOOK_URLS || [],
+      {
+        event: 'referral.created',
+        data: {
+          referrerId,
+          referredUserId: userId,
+          timestamp: new Date().toISOString(),
+        },
+      },
+      env.WEBHOOK_SECRET || ''
+    );
+
+    return updatedUser;
   }
 
   async getReferrals(userId: number): Promise<Omit<User, 'password'>[]> {

@@ -81,6 +81,7 @@ model WalletTransaction {
   description   String?               @map("description")    // User-facing description
   internalNotes String?               @map("internal_notes") // Service attribution for audit
   referenceId   String?               @map("reference_id")   // ID of related resource
+  metadata      Json?                 @map("metadata")       // Optional JSON metadata for additional context
   createdAt     DateTime              @default(now()) @map("created_at")
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)

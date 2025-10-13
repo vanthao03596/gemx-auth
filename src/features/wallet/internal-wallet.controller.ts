@@ -9,7 +9,7 @@ export class InternalWalletController {
 
   async creditWallet(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId, currency, amount, description, referenceId } = req.validatedBody as InternalCreditInput;
+      const { userId, currency, amount, description, referenceId, metadata } = req.validatedBody as InternalCreditInput;
       const serviceName = req.service!.name;
       const idempotencyKey = req.idempotencyKey!;
 
@@ -20,7 +20,8 @@ export class InternalWalletController {
         amount,
         description,                   // Clean user description from request
         referenceId,
-        serviceName                    // Service attribution for audit
+        serviceName,                   // Service attribution for audit
+        metadata
       );
 
       // Cache result for idempotency
@@ -35,7 +36,7 @@ export class InternalWalletController {
 
   async debitWallet(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId, currency, amount, description, referenceId } = req.validatedBody as InternalDebitInput;
+      const { userId, currency, amount, description, referenceId, metadata } = req.validatedBody as InternalDebitInput;
       const serviceName = req.service!.name;
       const idempotencyKey = req.idempotencyKey!;
 
@@ -46,7 +47,8 @@ export class InternalWalletController {
         amount,
         description,                   // Clean user description from request
         referenceId,
-        serviceName                    // Service attribution for audit
+        serviceName,                   // Service attribution for audit
+        metadata
       );
 
       const response = { transaction, message: 'Wallet debited successfully' };

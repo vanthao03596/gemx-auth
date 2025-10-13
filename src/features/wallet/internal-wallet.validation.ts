@@ -6,6 +6,7 @@ export const internalCreditSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   description: z.string().min(1, 'User-friendly description required').max(255),
   referenceId: z.string().max(50, 'Reference ID too long'),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const internalDebitSchema = z.object({
@@ -14,6 +15,7 @@ export const internalDebitSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   description: z.string().min(1, 'User-friendly description required').max(255),
   referenceId: z.string().max(50, 'Reference ID too long'),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const internalBalanceSchema = z.object({

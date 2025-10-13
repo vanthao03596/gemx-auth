@@ -83,6 +83,24 @@ const envSchema = z.object({
         throw new Error('ALLOWED_SERVICES must be valid JSON array');
       }
     }),
+
+  // Webhook configuration
+  WEBHOOK_URLS: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return [];
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) {
+          throw new Error('WEBHOOK_URLS must be a valid JSON array');
+        }
+        return parsed as string[];
+      } catch (error) {
+        throw new Error('WEBHOOK_URLS must be valid JSON array');
+      }
+    }),
+  WEBHOOK_SECRET: z.string().optional().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

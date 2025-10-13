@@ -1,4 +1,4 @@
-import { WalletTransaction } from '@prisma/client';
+import { Prisma, WalletTransaction } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
 import { WalletBalance, WalletTransactionResponse, PaginatedResponse, WalletTransactionAudit } from './wallet.types';
@@ -78,7 +78,8 @@ export class WalletService {
     amount: number,
     userDescription: string,      // Clean user-facing description
     referenceId?: string,
-    serviceName?: string          // For internal operations
+    serviceName?: string,         // For internal operations
+    metadata?: Prisma.InputJsonValue // Optional JSON metadata
   ): Promise<WalletTransaction> {
     return await prisma.$transaction(async (tx) => {
       const wallet = await tx.wallet.upsert({
@@ -102,7 +103,8 @@ export class WalletService {
           amount,
           description: userDescription,                    // "Referral bonus"
           internalNotes: serviceName ? `via ${serviceName}` : null,  // "via referral-service"
-          referenceId: serviceName ? `${serviceName}:${referenceId || ''}` : (referenceId || null)
+          referenceId: serviceName ? `${serviceName}:${referenceId || ''}` : (referenceId || null),
+          metadata: metadata ?? Prisma.JsonNull
         }
       });
     });
@@ -114,7 +116,8 @@ export class WalletService {
     amount: number,
     userDescription: string,      // Clean user-facing description
     referenceId?: string,
-    serviceName?: string          // For internal operations
+    serviceName?: string,         // For internal operations
+    metadata?: Prisma.InputJsonValue // Optional JSON metadata
   ): Promise<WalletTransaction> {
     return await prisma.$transaction(async (tx) => {
       const wallet = await tx.wallet.findUnique({
@@ -136,7 +139,8 @@ export class WalletService {
           amount: -amount,
           description: userDescription,                    // "Item purchase"
           internalNotes: serviceName ? `via ${serviceName}` : null,  // "via order-service"
-          referenceId: serviceName ? `${serviceName}:${referenceId || ''}` : (referenceId || null)
+          referenceId: serviceName ? `${serviceName}:${referenceId || ''}` : (referenceId || null),
+          metadata: metadata ?? Prisma.JsonNull
         }
       });
     });
