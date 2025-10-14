@@ -17,6 +17,7 @@ model User {
   lastDailyLogin DateTime?       @map("last_daily_login")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
+  role           UserRole        @default(USER) 
   referrer       User?           @relation("UserReferrals", fields: [referrerId], references: [id])
   referrals      User[]          @relation("UserReferrals")
   otpCodes       OtpCode[]
@@ -93,4 +94,9 @@ model WalletTransaction {
 enum WalletTransactionType {
   CREDIT
   DEBIT
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }

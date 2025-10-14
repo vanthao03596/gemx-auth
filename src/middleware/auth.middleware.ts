@@ -30,7 +30,8 @@ export const authenticateToken = async (
         referrerId: true,
         createdAt: true,
         updatedAt: true,
-        lastDailyLogin: true
+        lastDailyLogin: true,
+        role: true
       },
     });
 
@@ -72,7 +73,8 @@ export const optionalAuth = async (
         referrerId: true,
         createdAt: true,
         updatedAt: true,
-        lastDailyLogin: true
+        lastDailyLogin: true,
+        role: true
       },
     });
 

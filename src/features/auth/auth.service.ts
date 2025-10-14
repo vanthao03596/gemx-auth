@@ -48,7 +48,8 @@ export class AuthService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
-        lastDailyLogin: true
+        lastDailyLogin: true,
+        role: true
       },
     });
 
@@ -97,6 +98,7 @@ export class AuthService {
         lastDailyLogin: true,
         createdAt: true,
         updatedAt: true,
+        role: true
       },
     });
 
@@ -169,7 +171,8 @@ export class AuthService {
             referrerId: true,
             createdAt: true,
             updatedAt: true,
-            lastDailyLogin: true
+            lastDailyLogin: true,
+            role: true
           }
         }
       }
@@ -292,7 +295,8 @@ export class AuthService {
           referrerId: true,
           createdAt: true,
           updatedAt: true,
-          lastDailyLogin: true
+          lastDailyLogin: true,
+          role: true
         },
       });
     }
