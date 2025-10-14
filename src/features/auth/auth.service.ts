@@ -275,7 +275,8 @@ export class AuthService {
         referrerId: true,
         createdAt: true,
         updatedAt: true,
-        lastDailyLogin: true
+        lastDailyLogin: true,
+        role: true
       },
     });
 

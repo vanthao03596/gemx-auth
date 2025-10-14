@@ -125,7 +125,8 @@ export class SocialAuthService {
             referrerId: true,
             createdAt: true,
             updatedAt: true,
-            lastDailyLogin: true
+            lastDailyLogin: true,
+            role: true
           }
         }
       }
@@ -164,7 +165,8 @@ export class SocialAuthService {
           createdAt: true,
           updatedAt: true,
           lastDailyLogin: true,
-          password: true // Need this for the transaction
+          password: true, // Need this for the transaction
+          role: true
         }
       });
     }
@@ -190,7 +192,8 @@ export class SocialAuthService {
           createdAt: true,
           updatedAt: true,
           lastDailyLogin: true,
-          password: true // Need this for the transaction
+          password: true, // Need this for the transaction\
+          role: true
         }
       });
     }
