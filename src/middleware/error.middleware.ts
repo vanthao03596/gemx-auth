@@ -34,9 +34,17 @@ export const errorHandler = (
 
   if (error instanceof AppError) {
     const stack = env.NODE_ENV === 'development' ? error.stack : undefined;
+    const isProduction = env.NODE_ENV === 'production';
+    const is5xxError = error.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR;
+
+    // In production, hide detailed error messages for 5xx errors
+    const sanitizedMessage = isProduction && is5xxError
+      ? 'Internal server error'
+      : error.message;
+
     errorResponse(
       res,
-      error.message,
+      sanitizedMessage,
       error.statusCode,
       error.errorCode,
       undefined,
@@ -82,7 +90,16 @@ export const errorHandler = (
     errorCode = ErrorCode.INTERNAL_ERROR;
   }
 
-  errorResponse(res, message, statusCode, errorCode, undefined, error.stack);
+  // In production, hide detailed error messages for 5xx errors
+  const isProduction = env.NODE_ENV === 'production';
+  const is5xxError = statusCode >= HttpStatus.INTERNAL_SERVER_ERROR;
+  const sanitizedMessage = isProduction && is5xxError
+    ? 'Internal server error'
+    : message;
+
+  const stack = env.NODE_ENV === 'development' ? error.stack : undefined;
+
+  errorResponse(res, sanitizedMessage, statusCode, errorCode, undefined, stack);
 };
 
 export const notFound = (req: Request, res: Response) => {
