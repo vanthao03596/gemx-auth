@@ -112,6 +112,57 @@ export class SocialAuthController {
     }
   }
 
+  async getLinkGoogleUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { redirectUrl } = req.validatedQuery as UrlQueryInput;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AuthenticationError('User must be authenticated to link social accounts');
+      }
+
+      // Generate state for CSRF protection with userId and redirectUrl
+      const state = await generateOAuthState(userId.toString(), redirectUrl);
+
+      const authUrl = this.googleClient.generateAuthUrl({
+        access_type: 'offline',
+        scope: ['profile', 'email'],
+        state,
+        redirect_uri: env.GOOGLE_REDIRECT_URI
+      });
+
+      successResponse(res, { authUrl }, 'Google link URL generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getLinkTwitterUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { redirectUrl } = req.validatedQuery as UrlQueryInput;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AuthenticationError('User must be authenticated to link social accounts');
+      }
+
+      // Generate state for CSRF protection with userId and redirectUrl
+      const state = await generateOAuthState(userId.toString(), redirectUrl);
+
+      const { url, codeVerifier } = this.twitterClient.generateOAuth2AuthLink(
+        env.TWITTER_REDIRECT_URI,
+        { scope: ['tweet.read', 'users.read'], state }
+      );
+
+      // Store PKCE codeVerifier with state for Twitter OAuth2
+      await storePKCECodeVerifier(state, codeVerifier);
+
+      successResponse(res, { authUrl: url }, 'Twitter link URL generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async twitterCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
@@ -153,6 +204,170 @@ export class SocialAuthController {
         const separator = fallbackUrl?.includes('?') ? '&' : '?';
         return res.redirect(`${fallbackUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
       }
+      next(error);
+    }
+  }
+
+  async linkGoogleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
+
+      // Handle OAuth provider errors
+      if (error) {
+        const errorMessage = error_description || 'OAuth authentication failed';
+        throw new AuthenticationError(`Google OAuth error: ${errorMessage}`);
+      }
+
+      if (!code || !state) {
+        throw new AuthenticationError('Missing required OAuth parameters');
+      }
+
+      // CRITICAL: Validate OAuth state for CSRF protection
+      const stateValidation = await validateOAuthState(state);
+      if (!stateValidation.valid) {
+        throw new AuthenticationError('Invalid or expired OAuth state');
+      }
+
+      // Verify userId is present in state (linking mode)
+      if (!stateValidation.userId) {
+        throw new AuthenticationError('Invalid state: user ID required for linking');
+      }
+
+      // Get Google profile
+      const { tokens } = await this.googleClient.getToken(code);
+      this.googleClient.setCredentials(tokens);
+
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken: tokens.id_token!,
+        audience: env.GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload) {
+        throw new AuthenticationError('Invalid Google token payload');
+      }
+
+      const profile = {
+        id: payload.sub,
+        email: payload.email!,
+        name: payload.name!,
+        picture: payload.picture,
+      };
+
+      // Link the social account
+      await this.socialAuthService.linkSocialAccount(
+        parseInt(stateValidation.userId),
+        'google',
+        profile
+      );
+
+      // Redirect to frontend with success
+      const redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
+      const separator = redirectUrl?.includes('?') ? '&' : '?';
+
+      res.redirect(`${redirectUrl}${separator}linked=google&success=true`);
+    } catch (error) {
+      // Handle OAuth errors with fallback redirect
+      if (error instanceof AuthenticationError) {
+        const fallbackUrl = env.FRONTEND_DEFAULT_URL;
+        const separator = fallbackUrl?.includes('?') ? '&' : '?';
+        return res.redirect(`${fallbackUrl}${separator}error=link_failed&message=${encodeURIComponent(error.message)}`);
+      }
+      next(error);
+    }
+  }
+
+  async linkTwitterCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
+
+      // Handle OAuth provider errors
+      if (error) {
+        const errorMessage = error_description || 'OAuth authentication failed';
+        throw new AuthenticationError(`Twitter OAuth error: ${errorMessage}`);
+      }
+
+      if (!code || !state) {
+        throw new AuthenticationError('Missing required OAuth parameters');
+      }
+
+      // CRITICAL: Validate OAuth state for CSRF protection
+      const stateValidation = await validateOAuthState(state);
+      if (!stateValidation.valid) {
+        throw new AuthenticationError('Invalid or expired OAuth state');
+      }
+
+      // Verify userId is present in state (linking mode)
+      if (!stateValidation.userId) {
+        throw new AuthenticationError('Invalid state: user ID required for linking');
+      }
+
+      // Retrieve PKCE codeVerifier for Twitter OAuth2
+      const codeVerifier = await retrievePKCECodeVerifier(state);
+      if (!codeVerifier) {
+        throw new AuthenticationError('PKCE code verifier not found or expired');
+      }
+
+      // Get Twitter profile
+      const { accessToken } = await this.twitterClient.loginWithOAuth2({
+        code,
+        codeVerifier,
+        redirectUri: env.TWITTER_REDIRECT_URI,
+      });
+
+      const twitterUser = new TwitterApi(accessToken);
+      const { data: me } = await twitterUser.v2.me({
+        'user.fields': ['name', 'username', 'profile_image_url', 'public_metrics'],
+      });
+
+      if (!me) {
+        throw new AuthenticationError('Failed to fetch Twitter user data');
+      }
+
+      const profile = {
+        id: me.id,
+        username: me.username,
+        name: me.name,
+        profile_image_url: me.profile_image_url,
+        email: undefined,
+      };
+
+      // Link the social account
+      await this.socialAuthService.linkSocialAccount(
+        parseInt(stateValidation.userId),
+        'twitter',
+        profile
+      );
+
+      // Redirect to frontend with success
+      const redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
+      const separator = redirectUrl?.includes('?') ? '&' : '?';
+
+      res.redirect(`${redirectUrl}${separator}linked=twitter&success=true`);
+    } catch (error) {
+      // Handle OAuth errors with fallback redirect
+      if (error instanceof AuthenticationError) {
+        const fallbackUrl = env.FRONTEND_DEFAULT_URL;
+        const separator = fallbackUrl?.includes('?') ? '&' : '?';
+        return res.redirect(`${fallbackUrl}${separator}error=link_failed&message=${encodeURIComponent(error.message)}`);
+      }
+      next(error);
+    }
+  }
+
+  async unlinkSocialAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { provider } = req.params as { provider: string };
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AuthenticationError('User must be authenticated to unlink social accounts');
+      }
+
+      await this.socialAuthService.unlinkSocialAccount(userId, provider);
+
+      successResponse(res, null, `${provider} account unlinked successfully`);
+    } catch (error) {
       next(error);
     }
   }

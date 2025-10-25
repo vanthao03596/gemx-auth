@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { AuthController } from './auth.controller';
 import { SocialAuthController } from './social.controller';
-import { validateBody, validateQuery } from '../../middleware/validation.middleware';
+import { validateBody, validateQuery, validateParams } from '../../middleware/validation.middleware';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { authRateLimit, createRateLimiter } from '../../middleware/rateLimiter.middleware';
 import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema, siweVerifySchema } from './auth.validation';
-import { urlQuerySchema, callbackQuerySchema } from './social.validation';
+import { urlQuerySchema, callbackQuerySchema, unlinkParamsSchema } from './social.validation';
 
 const router = Router();
 const authController = new AuthController();
@@ -97,6 +97,43 @@ router.post(
   authRateLimit,
   validateBody(siweVerifySchema),
   authController.siweVerify.bind(authController)
+);
+
+// Social account linking routes (protected - requires authentication)
+router.get(
+  '/link/google/url',
+  authenticateToken,
+  authRateLimit,
+  validateQuery(urlQuerySchema),
+  socialAuthController.getLinkGoogleUrl.bind(socialAuthController)
+);
+
+router.get(
+  '/link/google/callback',
+  validateQuery(callbackQuerySchema),
+  socialAuthController.linkGoogleCallback.bind(socialAuthController)
+);
+
+router.get(
+  '/link/twitter/url',
+  authenticateToken,
+  authRateLimit,
+  validateQuery(urlQuerySchema),
+  socialAuthController.getLinkTwitterUrl.bind(socialAuthController)
+);
+
+router.get(
+  '/link/twitter/callback',
+  validateQuery(callbackQuerySchema),
+  socialAuthController.linkTwitterCallback.bind(socialAuthController)
+);
+
+router.delete(
+  '/social/:provider',
+  authenticateToken,
+  authRateLimit,
+  validateParams(unlinkParamsSchema),
+  socialAuthController.unlinkSocialAccount.bind(socialAuthController)
 );
 
 export { router as authRoutes };

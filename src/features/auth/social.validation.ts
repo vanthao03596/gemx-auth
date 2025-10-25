@@ -23,5 +23,12 @@ export const callbackQuerySchema = z.object({
   error_description: z.string().optional(), // OAuth error details
 });
 
+export const unlinkParamsSchema = z.object({
+  provider: z.enum(['google', 'twitter'], {
+    message: 'Provider must be either google or twitter'
+  })
+});
+
 export type UrlQueryInput = z.infer<typeof urlQuerySchema>;
 export type CallbackQueryInput = z.infer<typeof callbackQuerySchema>;
+export type UnlinkParamsInput = z.infer<typeof unlinkParamsSchema>;

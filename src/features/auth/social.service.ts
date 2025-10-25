@@ -103,6 +103,84 @@ export class SocialAuthService {
     }
   }
 
+  async linkSocialAccount(
+    userId: number,
+    provider: string,
+    profile: GoogleProfile | TwitterProfile
+  ): Promise<void> {
+    // Check if social account already exists for another user
+    const existingSocialAccount = await prisma.socialAccount.findUnique({
+      where: {
+        provider_providerId: {
+          provider,
+          providerId: profile.id
+        }
+      }
+    });
+
+    if (existingSocialAccount) {
+      if (existingSocialAccount.userId === userId) {
+        throw new AuthenticationError('This social account is already linked to your account');
+      }
+      throw new AuthenticationError('This social account is already linked to another user');
+    }
+
+    // Create the social account link
+    await prisma.socialAccount.create({
+      data: {
+        userId,
+        provider,
+        providerId: profile.id,
+        email: 'email' in profile ? profile.email || null : null,
+        name: profile.name,
+        avatar: 'picture' in profile ? profile.picture || null :
+                'profile_image_url' in profile ? profile.profile_image_url || null : null,
+      }
+    });
+  }
+
+  async unlinkSocialAccount(userId: number, provider: string): Promise<void> {
+    // Find the social account
+    const socialAccount = await prisma.socialAccount.findFirst({
+      where: {
+        userId,
+        provider
+      }
+    });
+
+    if (!socialAccount) {
+      throw new AuthenticationError(`No ${provider} account linked to this user`);
+    }
+
+    // Check if user has other authentication methods
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        socialAccounts: true
+      }
+    });
+
+    if (!user) {
+      throw new AuthenticationError('User not found');
+    }
+
+    // Prevent unlinking if it's the only authentication method
+    // User must have either a password or at least 2 social accounts
+    const hasPassword = user.password && user.password.length > 0;
+    const socialAccountCount = user.socialAccounts.length;
+
+    if (!hasPassword && socialAccountCount <= 1) {
+      throw new AuthenticationError(
+        'Cannot unlink the only authentication method. Please set a password or link another social account first.'
+      );
+    }
+
+    // Delete the social account
+    await prisma.socialAccount.delete({
+      where: { id: socialAccount.id }
+    });
+  }
+
   private async findOrCreateUser(
     provider: string,
     profile: GoogleProfile | TwitterProfile
