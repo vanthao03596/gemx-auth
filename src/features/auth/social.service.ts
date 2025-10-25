@@ -20,6 +20,15 @@ interface TwitterProfile {
   email?: string | undefined;
 }
 
+interface DiscordProfile {
+  id: string;
+  username: string;
+  discriminator: string;
+  name: string;
+  email?: string | undefined;
+  avatar?: string | undefined;
+}
+
 export class SocialAuthService {
   private googleClient: OAuth2Client;
   private twitterClient: TwitterApi;
@@ -103,10 +112,76 @@ export class SocialAuthService {
     }
   }
 
+  async handleDiscordCallback(code: string): Promise<Omit<User, 'password'>> {
+    try {
+      // Exchange code for access token
+      const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: env.DISCORD_CLIENT_ID,
+          client_secret: env.DISCORD_CLIENT_SECRET,
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: env.DISCORD_REDIRECT_URI,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new AuthenticationError('Failed to exchange Discord authorization code');
+      }
+
+      const tokenData = await tokenResponse.json() as { access_token: string };
+      const accessToken = tokenData.access_token;
+
+      // Fetch user profile
+      const userResponse = await fetch('https://discord.com/api/users/@me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new AuthenticationError('Failed to fetch Discord user data');
+      }
+
+      const userData = await userResponse.json() as {
+        id: string;
+        username: string;
+        discriminator: string;
+        email?: string;
+        avatar?: string;
+      };
+
+      const profile: DiscordProfile = {
+        id: userData.id,
+        username: userData.username,
+        discriminator: userData.discriminator,
+        // Discord's new username system uses discriminator "0" for new usernames
+        name: userData.discriminator === '0'
+          ? userData.username
+          : `${userData.username}#${userData.discriminator}`,
+        email: userData.email || undefined,
+        avatar: userData.avatar
+          ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
+          : undefined,
+      };
+
+      return await this.findOrCreateUser('discord', profile);
+    } catch (error) {
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
+      throw new AuthenticationError('Discord authentication failed');
+    }
+  }
+
   async linkSocialAccount(
     userId: number,
     provider: string,
-    profile: GoogleProfile | TwitterProfile
+    profile: GoogleProfile | TwitterProfile | DiscordProfile
   ): Promise<void> {
     // Check if social account already exists for another user
     const existingSocialAccount = await prisma.socialAccount.findUnique({
@@ -202,7 +277,7 @@ export class SocialAuthService {
 
   private async findOrCreateUser(
     provider: string,
-    profile: GoogleProfile | TwitterProfile
+    profile: GoogleProfile | TwitterProfile | DiscordProfile
   ): Promise<Omit<User, 'password'>> {
     // Check if social account exists
     const socialAccount = await prisma.socialAccount.findUnique({

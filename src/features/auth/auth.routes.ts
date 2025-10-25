@@ -85,6 +85,19 @@ router.get(
   socialAuthController.twitterCallback.bind(socialAuthController)
 );
 
+router.get(
+  '/discord/url',
+  authRateLimit,
+  validateQuery(urlQuerySchema),
+  socialAuthController.getDiscordAuthUrl.bind(socialAuthController)
+);
+
+router.get(
+  '/discord/callback',
+  validateQuery(callbackQuerySchema),
+  socialAuthController.discordCallback.bind(socialAuthController)
+);
+
 // SIWE authentication routes
 router.get(
   '/siwe/nonce',
@@ -123,6 +136,14 @@ router.get(
   authRateLimit,
   validateQuery(urlQuerySchema),
   socialAuthController.getLinkTwitterUrl.bind(socialAuthController)
+);
+
+router.get(
+  '/link/discord/url',
+  authenticateToken,
+  authRateLimit,
+  validateQuery(urlQuerySchema),
+  socialAuthController.getLinkDiscordUrl.bind(socialAuthController)
 );
 
 router.delete(

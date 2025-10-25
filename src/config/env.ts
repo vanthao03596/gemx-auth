@@ -32,6 +32,11 @@ const envSchema = z.object({
   TWITTER_REDIRECT_URI: z
     .string()
     .url('Twitter Redirect URI must be a valid URL'),
+  DISCORD_CLIENT_ID: z.string().min(1, 'Discord Client ID is required'),
+  DISCORD_CLIENT_SECRET: z.string().min(1, 'Discord Client Secret is required'),
+  DISCORD_REDIRECT_URI: z
+    .string()
+    .url('Discord Redirect URI must be a valid URL'),
   FRONTEND_DEFAULT_URL: z
     .string()
     .url('Frontend Default URL must be a valid URL')

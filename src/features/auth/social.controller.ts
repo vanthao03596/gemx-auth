@@ -149,6 +149,29 @@ export class SocialAuthController {
     }
   }
 
+  async getDiscordAuthUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { redirectUrl } = req.validatedQuery as UrlQueryInput;
+
+      // Generate state for CSRF protection with redirectUrl
+      const state = await generateOAuthState(req.user?.id?.toString(), redirectUrl);
+
+      const params = new URLSearchParams({
+        client_id: env.DISCORD_CLIENT_ID,
+        redirect_uri: env.DISCORD_REDIRECT_URI,
+        response_type: 'code',
+        scope: 'identify email',
+        state,
+      });
+
+      const authUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+
+      successResponse(res, { authUrl }, 'Discord auth URL generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getLinkGoogleUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { redirectUrl } = req.validatedQuery as UrlQueryInput;
@@ -200,6 +223,34 @@ export class SocialAuthController {
     }
   }
 
+  async getLinkDiscordUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { redirectUrl } = req.validatedQuery as UrlQueryInput;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AuthenticationError('User must be authenticated to link social accounts');
+      }
+
+      // Generate state for CSRF protection with userId and redirectUrl
+      const state = await generateOAuthState(userId.toString(), redirectUrl);
+
+      const params = new URLSearchParams({
+        client_id: env.DISCORD_CLIENT_ID,
+        redirect_uri: env.DISCORD_REDIRECT_URI,
+        response_type: 'code',
+        scope: 'identify email',
+        state,
+      });
+
+      const authUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+
+      successResponse(res, { authUrl }, 'Discord link URL generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async twitterCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
@@ -232,7 +283,7 @@ export class SocialAuthController {
       // Check if this is LINKING MODE (authenticated user) or LOGIN MODE
       if (stateValidation.userId) {
         // LINKING MODE: User is authenticated and wants to link Twitter account
-        
+
         // Get Twitter profile
         const { accessToken } = await this.twitterClient.loginWithOAuth2({
           code,
@@ -269,6 +320,115 @@ export class SocialAuthController {
       } else {
         // LOGIN MODE: User is not authenticated, perform login/registration
         const user = await this.socialAuthService.handleTwitterCallback(code, codeVerifier);
+        const token = await generateToken({ userId: user.id, email: user.email });
+
+        // Redirect to frontend with JWT token
+        res.redirect(`${redirectUrl}${separator}token=${token}`);
+      }
+    } catch (error) {
+      // Handle OAuth errors with fallback redirect
+      if (error instanceof AuthenticationError) {
+        const fallbackUrl = env.FRONTEND_DEFAULT_URL;
+        const separator = fallbackUrl?.includes('?') ? '&' : '?';
+        return res.redirect(`${fallbackUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+      }
+      next(error);
+    }
+  }
+
+  async discordCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
+
+      // Handle OAuth provider errors
+      if (error) {
+        const errorMessage = error_description || 'OAuth authentication failed';
+        throw new AuthenticationError(`Discord OAuth error: ${errorMessage}`);
+      }
+
+      if (!code || !state) {
+        throw new AuthenticationError('Missing required OAuth parameters');
+      }
+
+      // CRITICAL: Validate OAuth state for CSRF protection
+      const stateValidation = await validateOAuthState(state);
+      if (!stateValidation.valid) {
+        throw new AuthenticationError('Invalid or expired OAuth state');
+      }
+
+      const redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
+      const separator = redirectUrl?.includes('?') ? '&' : '?';
+
+      // Check if this is LINKING MODE (authenticated user) or LOGIN MODE
+      if (stateValidation.userId) {
+        // LINKING MODE: User is authenticated and wants to link Discord account
+
+        // Exchange code for access token and get Discord profile
+        const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            client_id: env.DISCORD_CLIENT_ID,
+            client_secret: env.DISCORD_CLIENT_SECRET,
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: env.DISCORD_REDIRECT_URI,
+          }),
+        });
+
+        if (!tokenResponse.ok) {
+          throw new AuthenticationError('Failed to exchange Discord authorization code');
+        }
+
+        const tokenData = await tokenResponse.json() as { access_token: string };
+        const accessToken = tokenData.access_token;
+
+        // Fetch user profile
+        const userResponse = await fetch('https://discord.com/api/users/@me', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!userResponse.ok) {
+          throw new AuthenticationError('Failed to fetch Discord user data');
+        }
+
+        const userData = await userResponse.json() as {
+          id: string;
+          username: string;
+          discriminator: string;
+          email?: string;
+          avatar?: string;
+        };
+
+        const profile = {
+          id: userData.id,
+          username: userData.username,
+          discriminator: userData.discriminator,
+          name: userData.discriminator === '0'
+            ? userData.username
+            : `${userData.username}#${userData.discriminator}`,
+          email: userData.email || undefined,
+          avatar: userData.avatar
+            ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
+            : undefined,
+        };
+
+        // Link the social account
+        await this.socialAuthService.linkSocialAccount(
+          parseInt(stateValidation.userId),
+          'discord',
+          profile
+        );
+
+        // Redirect with success
+        res.redirect(`${redirectUrl}${separator}linked=discord&success=true`);
+      } else {
+        // LOGIN MODE: User is not authenticated, perform login/registration
+        const user = await this.socialAuthService.handleDiscordCallback(code);
         const token = await generateToken({ userId: user.id, email: user.email });
 
         // Redirect to frontend with JWT token

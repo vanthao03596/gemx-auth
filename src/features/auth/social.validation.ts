@@ -24,8 +24,8 @@ export const callbackQuerySchema = z.object({
 });
 
 export const unlinkParamsSchema = z.object({
-  provider: z.enum(['google', 'twitter'], {
-    message: 'Provider must be either google or twitter'
+  provider: z.enum(['google', 'twitter', 'discord'], {
+    message: 'Provider must be either google, twitter, or discord'
   })
 });
 
