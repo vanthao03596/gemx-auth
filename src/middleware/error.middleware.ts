@@ -78,11 +78,11 @@ export const errorHandler = (
     statusCode = HttpStatus.BAD_REQUEST;
     message = 'Invalid data provided';
     errorCode = ErrorCode.VALIDATION_ERROR;
-  } else if (error.name === 'JsonWebTokenError') {
+  } else if (error.name === 'JWSInvalid') {
     statusCode = HttpStatus.UNAUTHORIZED;
     message = 'Invalid token';
     errorCode = ErrorCode.INVALID_TOKEN;
-  } else if (error.name === 'TokenExpiredError') {
+  } else if (error.name === 'JWTExpired') {
     statusCode = HttpStatus.UNAUTHORIZED;
     message = 'Token expired';
     errorCode = ErrorCode.TOKEN_EXPIRED;
