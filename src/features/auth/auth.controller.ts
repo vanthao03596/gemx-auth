@@ -49,28 +49,6 @@ export class AuthController {
         throw new NotFoundError('User not found');
       }
 
-      // Check if this is the first call of the day
-      // const today = new Date();
-      // today.setHours(0, 0, 0, 0);
-
-      // const isFirstCallToday = !user.lastDailyLogin ||
-      //   new Date(user.lastDailyLogin).getTime() < today.getTime();
-
-      // if (isFirstCallToday) {
-      //   // Credit 10 gemx for daily login
-      //   await this.walletService.creditWallet(
-      //     user.id,
-      //     'gemx',
-      //     10,
-      //     'Daily login bonus',
-      //     `daily_login_${today.toISOString().split('T')[0]}`,
-      //     'auth-service'
-      //   );
-
-      //   // Update last daily login
-      //   await this.authService.updateLastDailyLogin(user.id, new Date());
-      // }
-
       successResponse(res, { user }, 'Profile retrieved successfully');
     } catch (error) {
       next(error);

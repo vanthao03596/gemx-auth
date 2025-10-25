@@ -181,6 +181,25 @@ export class SocialAuthService {
     });
   }
 
+  async getConnectedSocialAccounts(userId: number) {
+    const socialAccounts = await prisma.socialAccount.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        provider: true,
+        email: true,
+        name: true,
+        avatar: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return socialAccounts;
+  }
+
   private async findOrCreateUser(
     provider: string,
     profile: GoogleProfile | TwitterProfile

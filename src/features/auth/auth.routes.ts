@@ -100,6 +100,15 @@ router.post(
 );
 
 // Social account linking routes (protected - requires authentication)
+// Note: /link/google/url and /link/twitter/url generate OAuth URLs for authenticated users
+// The callbacks reuse existing /google/callback and /twitter/callback endpoints
+router.get(
+  '/social',
+  authenticateToken,
+  authRateLimit,
+  socialAuthController.getConnectedAccounts.bind(socialAuthController)
+);
+
 router.get(
   '/link/google/url',
   authenticateToken,
@@ -109,23 +118,11 @@ router.get(
 );
 
 router.get(
-  '/link/google/callback',
-  validateQuery(callbackQuerySchema),
-  socialAuthController.linkGoogleCallback.bind(socialAuthController)
-);
-
-router.get(
   '/link/twitter/url',
   authenticateToken,
   authRateLimit,
   validateQuery(urlQuerySchema),
   socialAuthController.getLinkTwitterUrl.bind(socialAuthController)
-);
-
-router.get(
-  '/link/twitter/callback',
-  validateQuery(callbackQuerySchema),
-  socialAuthController.linkTwitterCallback.bind(socialAuthController)
 );
 
 router.delete(
