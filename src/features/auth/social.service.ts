@@ -266,6 +266,7 @@ export class SocialAuthService {
         name: true,
         avatar: true,
         createdAt: true,
+        providerId: true
       },
       orderBy: {
         createdAt: 'desc'

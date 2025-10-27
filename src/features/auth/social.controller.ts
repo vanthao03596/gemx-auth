@@ -53,6 +53,8 @@ export class SocialAuthController {
   }
 
   async googleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    let redirectUrl = env.FRONTEND_DEFAULT_URL;
+
     try {
       const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
 
@@ -72,7 +74,7 @@ export class SocialAuthController {
         throw new AuthenticationError('Invalid or expired OAuth state');
       }
 
-      const redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
+      redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
       const separator = redirectUrl?.includes('?') ? '&' : '?';
 
       // Check if this is LINKING MODE (authenticated user) or LOGIN MODE
@@ -118,11 +120,10 @@ export class SocialAuthController {
         res.redirect(`${redirectUrl}${separator}token=${token}`);
       }
     } catch (error) {
-      // Handle OAuth errors with fallback redirect
+      // Handle OAuth errors with redirect
       if (error instanceof AuthenticationError) {
-        const fallbackUrl = env.FRONTEND_DEFAULT_URL;
-        const separator = fallbackUrl?.includes('?') ? '&' : '?';
-        return res.redirect(`${fallbackUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+        const separator = redirectUrl?.includes('?') ? '&' : '?';
+        return res.redirect(`${redirectUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
       }
       next(error);
     }
@@ -252,6 +253,8 @@ export class SocialAuthController {
   }
 
   async twitterCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    let redirectUrl = env.FRONTEND_DEFAULT_URL;
+
     try {
       const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
 
@@ -277,7 +280,7 @@ export class SocialAuthController {
         throw new AuthenticationError('PKCE code verifier not found or expired');
       }
 
-      const redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
+      redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
       const separator = redirectUrl?.includes('?') ? '&' : '?';
 
       // Check if this is LINKING MODE (authenticated user) or LOGIN MODE
@@ -326,17 +329,18 @@ export class SocialAuthController {
         res.redirect(`${redirectUrl}${separator}token=${token}`);
       }
     } catch (error) {
-      // Handle OAuth errors with fallback redirect
+      // Handle OAuth errors with redirect
       if (error instanceof AuthenticationError) {
-        const fallbackUrl = env.FRONTEND_DEFAULT_URL;
-        const separator = fallbackUrl?.includes('?') ? '&' : '?';
-        return res.redirect(`${fallbackUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+        const separator = redirectUrl?.includes('?') ? '&' : '?';
+        return res.redirect(`${redirectUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
       }
       next(error);
     }
   }
 
   async discordCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    let redirectUrl = env.FRONTEND_DEFAULT_URL;
+
     try {
       const { code, state, error, error_description } = req.validatedQuery as CallbackQueryInput;
 
@@ -356,7 +360,7 @@ export class SocialAuthController {
         throw new AuthenticationError('Invalid or expired OAuth state');
       }
 
-      const redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
+      redirectUrl = stateValidation.redirectUrl || env.FRONTEND_DEFAULT_URL;
       const separator = redirectUrl?.includes('?') ? '&' : '?';
 
       // Check if this is LINKING MODE (authenticated user) or LOGIN MODE
@@ -435,11 +439,10 @@ export class SocialAuthController {
         res.redirect(`${redirectUrl}${separator}token=${token}`);
       }
     } catch (error) {
-      // Handle OAuth errors with fallback redirect
+      // Handle OAuth errors with redirect
       if (error instanceof AuthenticationError) {
-        const fallbackUrl = env.FRONTEND_DEFAULT_URL;
-        const separator = fallbackUrl?.includes('?') ? '&' : '?';
-        return res.redirect(`${fallbackUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+        const separator = redirectUrl?.includes('?') ? '&' : '?';
+        return res.redirect(`${redirectUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
       }
       next(error);
     }
