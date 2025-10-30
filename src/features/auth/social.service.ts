@@ -2,7 +2,7 @@ import { User } from '@prisma/client';
 import { OAuth2Client } from 'google-auth-library';
 import { TwitterApi } from 'twitter-api-v2';
 import { prisma } from '../../config/database';
-import { AuthenticationError } from '../../utils/errors';
+import { AuthenticationError, BadRequestError } from '../../utils/errors';
 import { env } from '../../config/env';
 import {
   validateTelegramAuth,
@@ -196,12 +196,12 @@ export class SocialAuthService {
   ): Promise<void> {
     // Validate Telegram authentication hash
     if (!validateTelegramAuth(telegramData)) {
-      throw new AuthenticationError('Invalid Telegram authentication data');
+      throw new BadRequestError('Invalid Telegram authentication data');
     }
 
     // Check if auth data is recent (within 1 hour)
     if (!isTelegramAuthRecent(telegramData.auth_date.toString())) {
-      throw new AuthenticationError('Telegram authentication data has expired');
+      throw new BadRequestError('Telegram authentication data has expired');
     }
 
     // Map Telegram data to profile format
