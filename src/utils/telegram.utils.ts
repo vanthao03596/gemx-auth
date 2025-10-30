@@ -2,12 +2,12 @@ import crypto from 'crypto';
 import { env } from '../config/env';
 
 export interface TelegramAuthData {
-  id: string;
+  id: number;
   first_name: string;
   last_name?: string | undefined;
   username?: string | undefined;
   photo_url?: string | undefined;
-  auth_date: string;
+  auth_date: number;
   hash: string;
 }
 

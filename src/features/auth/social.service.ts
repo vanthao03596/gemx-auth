@@ -35,7 +35,7 @@ interface DiscordProfile {
 }
 
 interface TelegramProfile {
-  id: string;
+  id: number;
   name: string;
   username?: string | undefined;
   photo_url?: string | undefined;
@@ -200,7 +200,7 @@ export class SocialAuthService {
     }
 
     // Check if auth data is recent (within 1 hour)
-    if (!isTelegramAuthRecent(telegramData.auth_date)) {
+    if (!isTelegramAuthRecent(telegramData.auth_date.toString())) {
       throw new AuthenticationError('Telegram authentication data has expired');
     }
 
@@ -228,7 +228,7 @@ export class SocialAuthService {
       where: {
         provider_providerId: {
           provider,
-          providerId: profile.id
+          providerId: profile.id.toString()
         }
       }
     });
@@ -245,7 +245,7 @@ export class SocialAuthService {
       data: {
         userId,
         provider,
-        providerId: profile.id,
+        providerId: profile.id.toString(),
         email: 'email' in profile ? profile.email || null : null,
         name: profile.name,
         avatar: 'picture' in profile ? profile.picture || null :
