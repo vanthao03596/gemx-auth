@@ -30,12 +30,12 @@ export const unlinkParamsSchema = z.object({
 });
 
 export const telegramLinkSchema = z.object({
-  id: z.string().min(1, 'Telegram user ID is required'),
+  id: z.number().min(1, 'Telegram user ID is required'),
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().optional(),
   username: z.string().optional(),
   photo_url: z.string().url('Photo URL must be a valid URL').optional(),
-  auth_date: z.string().min(1, 'Auth date is required'),
+  auth_date: z.number().min(1, 'Auth date is required'),
   hash: z.string().min(1, 'Hash is required'),
 });
 
