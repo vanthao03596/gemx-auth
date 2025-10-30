@@ -37,6 +37,7 @@ const envSchema = z.object({
   DISCORD_REDIRECT_URI: z
     .string()
     .url('Discord Redirect URI must be a valid URL'),
+  TELEGRAM_BOT_TOKEN: z.string().min(1, 'Telegram Bot Token is required'),
   FRONTEND_DEFAULT_URL: z
     .string()
     .url('Frontend Default URL must be a valid URL')

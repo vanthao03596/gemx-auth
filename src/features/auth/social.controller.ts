@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { TwitterApi } from 'twitter-api-v2';
 import { SocialAuthService } from './social.service';
-import { UrlQueryInput, CallbackQueryInput } from './social.validation';
+import { UrlQueryInput, CallbackQueryInput, TelegramLinkInput } from './social.validation';
 import { successResponse } from '../../utils/response.utils';
 import { AuthenticationError } from '../../utils/errors';
 import { generateToken } from '../../utils/jwt.utils';
@@ -444,6 +444,20 @@ export class SocialAuthController {
         const separator = redirectUrl?.includes('?') ? '&' : '?';
         return res.redirect(`${redirectUrl}${separator}error=oauth_failed&message=${encodeURIComponent(error.message)}`);
       }
+      next(error);
+    }
+  }
+
+  async linkTelegramAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+
+      const telegramData = req.validatedBody as TelegramLinkInput;
+
+      await this.socialAuthService.linkTelegramAccount(userId, telegramData);
+
+      successResponse(res, null, 'Telegram account linked successfully');
+    } catch (error) {
       next(error);
     }
   }

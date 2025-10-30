@@ -5,7 +5,7 @@ import { validateBody, validateQuery, validateParams } from '../../middleware/va
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { authRateLimit, createRateLimiter } from '../../middleware/rateLimiter.middleware';
 import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema, siweVerifySchema } from './auth.validation';
-import { urlQuerySchema, callbackQuerySchema, unlinkParamsSchema } from './social.validation';
+import { urlQuerySchema, callbackQuerySchema, unlinkParamsSchema, telegramLinkSchema } from './social.validation';
 
 const router = Router();
 const authController = new AuthController();
@@ -144,6 +144,14 @@ router.get(
   authRateLimit,
   validateQuery(urlQuerySchema),
   socialAuthController.getLinkDiscordUrl.bind(socialAuthController)
+);
+
+router.post(
+  '/link/telegram',
+  authenticateToken,
+  authRateLimit,
+  validateBody(telegramLinkSchema),
+  socialAuthController.linkTelegramAccount.bind(socialAuthController)
 );
 
 router.delete(

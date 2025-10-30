@@ -4,6 +4,11 @@ import { TwitterApi } from 'twitter-api-v2';
 import { prisma } from '../../config/database';
 import { AuthenticationError } from '../../utils/errors';
 import { env } from '../../config/env';
+import {
+  validateTelegramAuth,
+  isTelegramAuthRecent,
+  type TelegramAuthData
+} from '../../utils/telegram.utils';
 
 interface GoogleProfile {
   id: string;
@@ -27,6 +32,13 @@ interface DiscordProfile {
   name: string;
   email?: string | undefined;
   avatar?: string | undefined;
+}
+
+interface TelegramProfile {
+  id: string;
+  name: string;
+  username?: string | undefined;
+  photo_url?: string | undefined;
 }
 
 export class SocialAuthService {
@@ -178,10 +190,38 @@ export class SocialAuthService {
     }
   }
 
+  async linkTelegramAccount(
+    userId: number,
+    telegramData: TelegramAuthData
+  ): Promise<void> {
+    // Validate Telegram authentication hash
+    if (!validateTelegramAuth(telegramData)) {
+      throw new AuthenticationError('Invalid Telegram authentication data');
+    }
+
+    // Check if auth data is recent (within 1 hour)
+    if (!isTelegramAuthRecent(telegramData.auth_date)) {
+      throw new AuthenticationError('Telegram authentication data has expired');
+    }
+
+    // Map Telegram data to profile format
+    const profile: TelegramProfile = {
+      id: telegramData.id,
+      name: telegramData.last_name
+        ? `${telegramData.first_name} ${telegramData.last_name}`
+        : telegramData.first_name,
+      username: telegramData.username,
+      photo_url: telegramData.photo_url,
+    };
+
+    // Use existing linkSocialAccount method
+    await this.linkSocialAccount(userId, 'telegram', profile);
+  }
+
   async linkSocialAccount(
     userId: number,
     provider: string,
-    profile: GoogleProfile | TwitterProfile | DiscordProfile
+    profile: GoogleProfile | TwitterProfile | DiscordProfile | TelegramProfile
   ): Promise<void> {
     // Check if social account already exists for another user
     const existingSocialAccount = await prisma.socialAccount.findUnique({
@@ -209,7 +249,8 @@ export class SocialAuthService {
         email: 'email' in profile ? profile.email || null : null,
         name: profile.name,
         avatar: 'picture' in profile ? profile.picture || null :
-                'profile_image_url' in profile ? profile.profile_image_url || null : null,
+                'profile_image_url' in profile ? profile.profile_image_url || null :
+                'photo_url' in profile ? profile.photo_url || null : null,
       }
     });
   }
