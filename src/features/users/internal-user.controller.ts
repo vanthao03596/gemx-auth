@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from './user.service';
-import { BatchCreateUsersInput, UpdateReferrersInput } from './internal-user.validation';
+import { BatchCreateUsersInput, UpdateReferrersInput, SearchUsersQuery } from './internal-user.validation';
 import { successResponse } from '../../utils/response.utils';
 
 export class InternalUserController {
@@ -30,6 +30,18 @@ export class InternalUserController {
       const result = await this.userService.updateReferrers(data.updates);
 
       successResponse(res, result, 'Referrers updated successfully', 200);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async searchUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { search } = req.validatedQuery as SearchUsersQuery;
+
+      const users = await this.userService.searchUsers(search);
+
+      successResponse(res, { users }, 'Users retrieved successfully', 200);
     } catch (error) {
       next(error);
     }

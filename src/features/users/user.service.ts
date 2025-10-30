@@ -23,6 +23,28 @@ export class UserService {
     });
   }
 
+  async searchUsers(searchQuery: string): Promise<Omit<User, 'password'>[]> {
+    return prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: searchQuery } },
+          { email: { contains: searchQuery } },
+        ]
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        walletAddress: true,
+        referrerId: true,
+        createdAt: true,
+        updatedAt: true,
+        lastDailyLogin: true,
+        role: true
+      }
+    });
+  }
+
   async getUserById(userId: number): Promise<Omit<User, 'password'> | null> {
     const user = await prisma.user.findUnique({
       where: { id: userId },

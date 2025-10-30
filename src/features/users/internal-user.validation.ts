@@ -33,3 +33,9 @@ export const updateReferrersSchema = z.object({
 
 export type ReferralUpdateInput = z.infer<typeof referralUpdateSchema>;
 export type UpdateReferrersInput = z.infer<typeof updateReferrersSchema>;
+
+export const searchUsersQuerySchema = z.object({
+  search: z.string().min(1, 'Search query is required'),
+});
+
+export type SearchUsersQuery = z.infer<typeof searchUsersQuerySchema>;
