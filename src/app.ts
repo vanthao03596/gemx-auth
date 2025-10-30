@@ -5,6 +5,7 @@ import compression from 'compression';
 import { authRoutes } from './features/auth/auth.routes';
 import { healthRoutes } from './features/health/health.routes';
 import { userRoutes } from './features/users/user.routes';
+import { internalUserRoutes } from './features/users/internal-user.routes';
 import { walletRoutes } from './features/wallet/wallet.routes';
 import { internalWalletRoutes } from './features/wallet/internal-wallet.routes';
 // import { globalRateLimit } from './middleware/rateLimiter.middleware';
@@ -31,6 +32,7 @@ app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/wallet', walletRoutes);
+app.use('/internal/v1/users', internalUserRoutes);
 app.use('/internal/v1/wallet', internalWalletRoutes);
 
 app.get('/', (_req, res) => {

@@ -25,6 +25,7 @@ const validateServiceAuth = async (
     // Define service permissions
     const servicePermissions: Record<string, string[]> = {
       'academy-service': ['credit', 'debit', 'balance'],
+      'gemon-service': ['create-user', 'update-referrers']
     };
 
     return {
