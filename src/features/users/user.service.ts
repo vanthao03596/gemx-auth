@@ -398,6 +398,7 @@ export class UserService {
             data: {
               userId: user.id,
               email: user.email,
+              creationMethod: 'bulk',
               serviceName,
               timestamp: new Date().toISOString(),
             },

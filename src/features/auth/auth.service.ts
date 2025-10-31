@@ -10,6 +10,8 @@ import { generateSiweNonce, parseSiweMessage, verifySiweMessage } from 'viem/siw
 import { siweClient, isValidSiweDomain } from '../../config/siwe';
 import { setCache, getCache, deleteCache } from '../../utils/redis.utils';
 import { SiweNonceResponse } from './siwe.types';
+import { sendWebhooks } from '../../utils/webhook.utils';
+import { env } from '../../config/env';
 
 export interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -52,6 +54,21 @@ export class AuthService {
         role: true
       },
     });
+
+    // Send webhook notification for user creation (fire-and-forget)
+    void sendWebhooks(
+      env.WEBHOOK_URLS || [],
+      {
+        event: 'user.created',
+        data: {
+          userId: user.id,
+          email: user.email,
+          creationMethod: 'registration',
+          timestamp: new Date().toISOString(),
+        },
+      },
+      env.WEBHOOK_SECRET || ''
+    );
 
     const token = await generateToken({
       userId: user.id,
@@ -128,6 +145,21 @@ export class AuthService {
         },
         select: { id: true, email: true, name: true, walletAddress: true, referrerId: true }
       });
+
+      // Send webhook notification for user creation (fire-and-forget)
+      void sendWebhooks(
+        env.WEBHOOK_URLS || [],
+        {
+          event: 'user.created',
+          data: {
+            userId: user.id,
+            email: user.email,
+            creationMethod: 'otp',
+            timestamp: new Date().toISOString(),
+          },
+        },
+        env.WEBHOOK_SECRET || ''
+      );
     }
 
     // Store OTP (upsert to handle existing OTP codes)
@@ -300,6 +332,21 @@ export class AuthService {
           role: true
         },
       });
+
+      // Send webhook notification for user creation (fire-and-forget)
+      void sendWebhooks(
+        env.WEBHOOK_URLS || [],
+        {
+          event: 'user.created',
+          data: {
+            userId: user.id,
+            email: user.email,
+            creationMethod: 'siwe',
+            timestamp: new Date().toISOString(),
+          },
+        },
+        env.WEBHOOK_SECRET || ''
+      );
     }
 
     // Generate JWT using existing utility

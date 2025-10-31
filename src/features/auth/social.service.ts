@@ -9,6 +9,7 @@ import {
   isTelegramAuthRecent,
   type TelegramAuthData
 } from '../../utils/telegram.utils';
+import { sendWebhooks } from '../../utils/webhook.utils';
 
 interface GoogleProfile {
   id: string;
@@ -410,6 +411,21 @@ export class SocialAuthService {
           role: true
         }
       });
+
+      // Send webhook notification for user creation (fire-and-forget)
+      void sendWebhooks(
+        env.WEBHOOK_URLS || [],
+        {
+          event: 'user.created',
+          data: {
+            userId: user.id,
+            email: user.email,
+            creationMethod: 'social',
+            timestamp: new Date().toISOString(),
+          },
+        },
+        env.WEBHOOK_SECRET || ''
+      );
     }
 
     // Link social account
