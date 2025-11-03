@@ -118,7 +118,6 @@ router.post(
 router.get(
   '/social',
   authenticateToken,
-  authRateLimit,
   socialAuthController.getConnectedAccounts.bind(socialAuthController)
 );
 
