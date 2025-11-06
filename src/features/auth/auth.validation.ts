@@ -35,8 +35,19 @@ export const siweVerifySchema = z.object({
   signature: z.string().regex(/^0x[a-fA-F0-9]{130}$/, 'Invalid signature format'),
 });
 
+export const connectWalletSchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  signature: z.string().regex(/^0x[a-fA-F0-9]{130}$/, 'Invalid signature format'),
+  address: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address format')
+    .transform((val) => val.toLowerCase()),
+  chainId: z.number().int().positive('Chain ID must be a positive integer'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SendOtpInput = z.infer<typeof sendOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type SiweVerifyInput = z.infer<typeof siweVerifySchema>;
+export type ConnectWalletInput = z.infer<typeof connectWalletSchema>;

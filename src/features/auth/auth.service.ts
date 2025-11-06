@@ -2,7 +2,7 @@ import { User } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { generateToken } from '../../utils/jwt.utils';
-import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInput } from './auth.validation';
+import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInput, ConnectWalletInput } from './auth.validation';
 import { ConflictError, AuthenticationError } from '../../utils/errors';
 import { generateOtp, createOtpExpiration, isOtpExpired } from '../../utils/otp.utils';
 import { EmailService } from '../otp/email.service';
@@ -364,5 +364,103 @@ export class AuthService {
       where: { id: userId },
       data: { lastDailyLogin: date },
     });
+  }
+
+  async generateWalletConnectNonce(userId: number): Promise<SiweNonceResponse> {
+    const nonce = generateSiweNonce();
+
+    // Store nonce with userId context in Redis with 5min TTL
+    await setCache(`wallet:nonce:${nonce}`, userId.toString(), 300);
+
+    return { nonce };
+  }
+
+  async connectWallet(userId: number, data: ConnectWalletInput): Promise<Omit<User, 'password'>> {
+    const { message, signature, address, chainId } = data;
+
+    // Parse SIWE message to extract nonce
+    let siweMessage;
+    try {
+      siweMessage = parseSiweMessage(message);
+    } catch (_error) {
+      throw new AuthenticationError('Invalid SIWE message format');
+    }
+
+    // Validate domain is in allowed list
+    if (!siweMessage.domain || !isValidSiweDomain(siweMessage.domain)) {
+      throw new AuthenticationError(`Invalid domain: ${siweMessage.domain}. Must be one of the configured domains.`);
+    }
+
+    // Validate nonce exists and matches the requesting user
+    const storedUserId = await getCache<string>(`wallet:nonce:${siweMessage.nonce}`);
+    if (!storedUserId || parseInt(storedUserId) !== userId) {
+      throw new AuthenticationError('Invalid or expired nonce');
+    }
+
+    // Verify the address from message matches the provided address
+    if (!siweMessage.address) {
+      throw new AuthenticationError('Invalid SIWE message: missing address');
+    }
+
+    if (siweMessage.address.toLowerCase() !== address.toLowerCase()) {
+      throw new AuthenticationError('Address mismatch between message and request');
+    }
+
+    // Verify signature using viem
+    const isValid = await verifyMessage({
+      address: address as `0x${string}`,
+      message,
+      signature: signature as `0x${string}`,
+    });
+
+    if (!isValid) {
+      throw new AuthenticationError('Invalid signature');
+    }
+
+    // Check if wallet address is already connected to another user
+    const existingWallet = await prisma.user.findUnique({
+      where: { walletAddress: address.toLowerCase() },
+    });
+
+    if (existingWallet && existingWallet.id !== userId) {
+      throw new ConflictError('This wallet address is already connected to another account');
+    }
+
+    // Invalidate nonce after successful verification
+    await deleteCache(`wallet:nonce:${siweMessage.nonce}`);
+
+    // Update user's wallet address
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { walletAddress: address.toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        walletAddress: true,
+        referrerId: true,
+        createdAt: true,
+        updatedAt: true,
+        lastDailyLogin: true,
+        role: true
+      },
+    });
+
+    // Send webhook notification for wallet connection (fire-and-forget)
+    // void sendWebhooks(
+    //   env.WEBHOOK_URLS || [],
+    //   {
+    //     event: 'wallet.connected',
+    //     data: {
+    //       userId: updatedUser.id,
+    //       walletAddress: updatedUser.walletAddress,
+    //       chainId,
+    //       timestamp: new Date().toISOString(),
+    //     },
+    //   },
+    //   env.WEBHOOK_SECRET || ''
+    // );
+
+    return updatedUser;
   }
 }

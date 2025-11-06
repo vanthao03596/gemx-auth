@@ -4,7 +4,7 @@ import { SocialAuthController } from './social.controller';
 import { validateBody, validateQuery, validateParams } from '../../middleware/validation.middleware';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { authRateLimit, createRateLimiter } from '../../middleware/rateLimiter.middleware';
-import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema, siweVerifySchema } from './auth.validation';
+import { registerSchema, loginSchema, sendOtpSchema, verifyOtpSchema, siweVerifySchema, connectWalletSchema } from './auth.validation';
 import { urlQuerySchema, callbackQuerySchema, unlinkParamsSchema, telegramLinkSchema } from './social.validation';
 
 const router = Router();
@@ -110,6 +110,22 @@ router.post(
   authRateLimit,
   validateBody(siweVerifySchema),
   authController.siweVerify.bind(authController)
+);
+
+// Wallet connection routes (protected - requires authentication)
+router.get(
+  '/wallet/nonce',
+  authenticateToken,
+  authRateLimit,
+  authController.getWalletNonce.bind(authController)
+);
+
+router.post(
+  '/wallet/connect',
+  authenticateToken,
+  authRateLimit,
+  validateBody(connectWalletSchema),
+  authController.connectWallet.bind(authController)
 );
 
 // Social account linking routes (protected - requires authentication)

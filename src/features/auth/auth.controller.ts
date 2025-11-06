@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInput } from './auth.validation';
+import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInput, ConnectWalletInput } from './auth.validation';
 import { successResponse } from '../../utils/response.utils';
 import { HttpStatus } from '../../types/response.types';
 import { AuthenticationError, NotFoundError } from '../../utils/errors';
@@ -100,6 +100,34 @@ export class AuthController {
       const data = req.validatedBody as SiweVerifyInput;
       const result = await this.authService.verifySiweSignature(data);
       successResponse(res, result, 'SIWE authentication successful');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getWalletNonce(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError('User not authenticated');
+      }
+
+      const result = await this.authService.generateWalletConnectNonce(req.user.id);
+      successResponse(res, result, 'Wallet connection nonce generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async connectWallet(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError('User not authenticated');
+      }
+
+      const data = req.validatedBody as ConnectWalletInput;
+      const user = await this.authService.connectWallet(req.user.id, data);
+
+      successResponse(res, { user }, 'Wallet connected successfully');
     } catch (error) {
       next(error);
     }
