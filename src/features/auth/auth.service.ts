@@ -6,12 +6,13 @@ import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput, SiweVerifyInpu
 import { ConflictError, AuthenticationError } from '../../utils/errors';
 import { generateOtp, createOtpExpiration, isOtpExpired } from '../../utils/otp.utils';
 import { EmailService } from '../otp/email.service';
-import { generateSiweNonce, parseSiweMessage, verifySiweMessage } from 'viem/siwe';
-import { siweClient, isValidSiweDomain } from '../../config/siwe';
+import { generateSiweNonce, parseSiweMessage } from 'viem/siwe';
+import { isValidSiweDomain } from '../../config/siwe';
 import { setCache, getCache, deleteCache } from '../../utils/redis.utils';
 import { SiweNonceResponse } from './siwe.types';
 import { sendWebhooks } from '../../utils/webhook.utils';
 import { env } from '../../config/env';
+import { verifyMessage } from 'viem';
 
 export interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -279,10 +280,10 @@ export class AuthService {
     }
 
     // Verify signature using viem
-    const isValid = await verifySiweMessage(siweClient, {
+    const isValid = await verifyMessage({
+      address: siweMessage.address as `0x${string}`,
       message,
       signature: signature as `0x${string}`,
-      domain: siweMessage.domain, // Use the domain from the message itself
     });
 
     if (!isValid) {
